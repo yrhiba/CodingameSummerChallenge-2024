@@ -1,28 +1,39 @@
 #include "header.hpp"
 /*start*/
+
+struct MiniGame
+{
+	string gpu;
+	vector<int> regs = vector<int>(7);
+};
+
+struct Game
+{
+	int running = true;
+	int player_idx;
+	int nb_games;
+	vector<string> playersScore = vector<string>(3);
+	vector<MiniGame> minGames = vector<MiniGame>(4);
+};
+
 int main()
 {
-	cin>>playerIdx>>nbGames;ign
-	while(stillGameRunning)
+	Game game;
+	cin>>game.player_idx>>game.nb_games;ign
+	//
+	while (game.running)
 	{
-		// read turn data
-		players.read(), minGames.read();
-
-		// debug turn data
-		cerr << "GameRound: " << turn++ << endl;
-
-		Player &p = players.players[playerIdx];
-
-		cerr << "totalScore: " << p.totalScore << "\n";
-		for (int g=0;g<NBGAMES;g++)
+		for (string &lineScore : game.playersScore)
 		{
-			gameScore &mg = p.scores[g];
-			cerr << "Score of Game-" << g+1 << ": " << mg.getTotalScore() << " | ";
-			cerr << "gold:" << mg.goldMedal << ", silver:" << mg.silverMedal;
-			cerr << ", bronze:" << mg.bronzeMedal << "\n";
+			getline(cin, lineScore);
+		}
+		for (int g = 0; g < game.nb_games; g++)
+		{
+			MiniGame &curGame = game.minGames[g];
+			cin >> curGame.gpu;
+			for (int &reg : curGame.regs) cin>>reg;ign
 		}
 
-		// final turn stage
 		cout << "UP" << endl;
 	}
 }

@@ -23,16 +23,6 @@ using namespace std;
 # define all(x) begin(x), end(x)
 # define rall(x) rbegin(x), rend(x)
 # define ign cin.ignore();
-// games macros
-# define HURDLERACE "HURDLERACE"
-# define ARCHERY "ARCHERY"
-# define DIVING "DIVING"
-# define ROLLERSPEEDSKATING "ROLLERSPEEDSKATING"
-# define stillGameRunning true
-# define NBGAMES 4
-# define NBPLAYERS 3
+
 /*end*/
 
-// local includes
-#include "classes.hpp"
-#include "vars.hpp"

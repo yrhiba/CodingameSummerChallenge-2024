@@ -19,8 +19,6 @@ vector<string> files =
 {
 	/* header-files*/
 	"includes/header.hpp",
-	"includes/classes.hpp",
-	"includes/vars.hpp",
 
 	/*main-file*/
 	"src/main.cpp",
