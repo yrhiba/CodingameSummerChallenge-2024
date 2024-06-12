@@ -1,12 +1,17 @@
 #include "header.hpp"
 /*start*/
+
+int currentGame = 0, currentGold = 0;
+
 int main()
 {
-	cin>>playerIdx>>nbGames;ign
+	cin>>playerIdx;ign
+	cin>>nbGames;ign
 	while(stillGameRunning)
 	{
 		// read turn data
-		players.read(), minGames.read();
+		players.read();
+		minGames.read();
 
 		// debug turn data
 		cerr << "GameRound: " << turn++ << endl;
@@ -19,10 +24,28 @@ int main()
 			gameScore &mg = p.scores[g];
 			cerr << "Score of Game-" << g+1 << ": " << mg.getTotalScore() << " | ";
 			cerr << "gold:" << mg.goldMedal << ", silver:" << mg.silverMedal;
-			cerr << ", bronze:" << mg.bronzeMedal << "\n";
+			cerr << ", bronze:" << mg.bronzeMedal << "\n"; 
+	
+			HurdleRace &h = minGames.games[g];
+			cerr << "gpu<" << h.gpu << ">." << endl;
+			cerr << "regs: ";
+			for (int r:h.regs) cerr << r << " ";
+			cerr << endl;
 		}
 
+		// found next game
+		if (players.players[playerIdx].scores[currentGame].goldMedal > currentGold)
+		{
+			currentGame += 1;
+			currentGame %= nbGames;
+			currentGold = players.players[playerIdx].scores[currentGame].goldMedal;
+		};
+
+		HurdleRace &curGame = minGames.games[currentGame];
+		int playerCurPosition = minGames.games[currentGame].regs[playerIdx];
+
 		// final turn stage
-		cout << "UP" << endl;
+		cerr << "currentGame: " << currentGame << " " << playerCurPosition << endl;
+		cout << minGames.games[currentGame].getBestAction(playerCurPosition) << endl;
 	}
 }

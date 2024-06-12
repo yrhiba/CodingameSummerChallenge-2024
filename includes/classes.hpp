@@ -11,8 +11,33 @@ struct HurdleRace
 	// methodes
 	void read()
 	{
-		cin>>gpu;ign
-		for (int r:regs)cin>>r;ign
+		cin>>gpu;
+		for (int &r:regs) cin>>r;
+		ign
+	}
+
+	bool isValidMove(int pos, int movedBy)
+	{
+		bool jump = (movedBy == 2);
+		for (int m = 1; m <= movedBy; m++)
+		{
+			if (pos + m >= gpu.size()) break;
+			if ((gpu[pos+m] == '#') && !jump) return (false);
+			jump = false;
+		}
+		return (true);
+	}
+
+	string getBestAction(int pos)
+	{
+		vector<pair<int, string>> actions = {
+			{3, "RIGHT"},
+			{2, "UP"},
+			{1, "LEFT"}
+		};
+		for (auto [movedBy, action] : actions)
+			if (isValidMove(pos, movedBy)) return action;
+		return "none";
 	}
 };
 
@@ -39,7 +64,7 @@ struct Player
 			S>>scores[game].goldMedal;
 			S>>scores[game].silverMedal;
 			S>>scores[game].bronzeMedal;
-		}ign
+		}
 	}
 };
 
