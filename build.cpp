@@ -20,6 +20,9 @@ vector<string> files =
 	/* header-files*/
 	"includes/header.hpp",
 
+	/* mini-games - files */
+	"src/archery/archery.cpp",
+
 	/*main-file*/
 	"src/main.cpp",
 };
