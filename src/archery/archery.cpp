@@ -1,5 +1,4 @@
 #include "header.hpp"
-
 /*start*/
 
 vector<pair<int, string>> getArcheryBestActionOrder(MiniGame &archey)

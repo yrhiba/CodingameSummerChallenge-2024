@@ -21,11 +21,19 @@ int main()
 	//
 	while (game.running)
 	{
+		game.turn += 1;
 		readTurnInput(game);
 
-		vector<pair<int, string>> archeryActionOrder
-			= getArcheryBestActionOrder(game.minGames[1]);
+		if (game.turn == 0)
+		{
+			if (game.minGames[0].gpu.substr(0, 4) == "....")
+			{
+				cout << "RIGHT" << endl;
+				continue;
+			}
+		}
 
-		cout << archeryActionOrder.front().second << endl;
+
+		cout << "UP" << endl;
 	}
 }

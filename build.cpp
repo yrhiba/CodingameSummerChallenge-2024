@@ -22,6 +22,8 @@ vector<string> files =
 
 	/* mini-games - files */
 	"src/archery/archery.cpp",
+	"src/diving/diving.cpp",
+	"src/hurdle/hurdle.cpp",
 
 	/*main-file*/
 	"src/main.cpp",
