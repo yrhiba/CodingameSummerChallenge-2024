@@ -17,14 +17,6 @@ using namespace std;
 
 vector<string> files =
 {
-	/* header-files*/
-	"includes/header.hpp",
-
-	/* mini-games - files */
-	"src/archery/archery.cpp",
-	"src/diving/diving.cpp",
-	"src/hurdle/hurdle.cpp",
-
 	/*main-file*/
 	"src/main.cpp",
 };
