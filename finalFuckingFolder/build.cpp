@@ -17,7 +17,12 @@ using namespace std;
 
 vector<string> files =
 {
+	/* includes-file */
+	"incs/header.hpp",
+	"incs/state.hpp",
+
 	/*main-file*/
+	"src/game.cpp",
 	"src/main.cpp",
 };
 

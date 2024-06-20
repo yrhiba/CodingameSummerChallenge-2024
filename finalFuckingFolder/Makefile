@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: yrhiba <yrhiba@student.1337.ma>            +#+  +:+       +#+         #
+#    By: yrhiba <yrhiba@student.42.fr>              +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/12/21 16:59:00 by yrhiba            #+#    #+#              #
-#    Updated: 2024/06/13 20:28:45 by yrhiba           ###   ########.fr        #
+#    Updated: 2024/06/20 20:49:17 by yrhiba           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ SCRIPT = makeCodingameFile
 FILES = build.cpp
 
 buildClean:
-	make run clean
+	make run
 
 $(SCRIPT) : $(FILES)
 	@make build
@@ -26,7 +26,7 @@ build :
 run : $(SCRIPT)
 	@mkdir -p prod
 	./$(SCRIPT)
-	cat ./prod/code.cpp | pbcopy
+	cat ./prod/code.cpp | xsel --clipboard --input
 
 clean:
 	@rm -rf .vscode .DS_Store

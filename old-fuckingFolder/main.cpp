@@ -178,7 +178,7 @@ Node *newNode(const State &_state,
 	node->visit_count = 0;
 	node->value_sum = 0;
 	node->expandable_index = 0;
-	return node;
+	return (node);
 }
 
 bool is_fully_expanded(Node *node)
@@ -274,13 +274,13 @@ string search(int number_of_iterations, State &state)
 		backpropagate(it, value);
 	}
 	//
-	// debug(root);
-
+	debug(root);
+	//
 	map<char, double> porb;
 	int sum = 0;
 	for (auto i : root->childrens)
 	{
-		porb[i->action_taken] += i->visit_count;
+		porb[i->action_taken] = i->visit_count;
 		sum += i->visit_count;
 	}
 	//
@@ -315,7 +315,7 @@ void solve(State &state, int turn)
 {
 	cerr << state << endl;
 
-	string action = search(1500, state);
+	string action = search(5000, state);
 
 	cout << action << endl;
 
