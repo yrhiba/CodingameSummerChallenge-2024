@@ -14,212 +14,76 @@
 #include <cstdlib>
 #include <numeric>
 #include <cassert>
+#include <chrono>
 using namespace std;
 /*macros*/
 # define INF 1e9
+# define MAXTURNS 1
 /*globla-variables*/
 const int nb_players = 3;
 const int nb_games = 4;
-vector<string> mcts_actions_list;
+string mcts_actions_list = "UDLR";
 int player_idx;
-/*utils-structers*/
-struct Medals
-{
-	int gold;
-	int silver;
-	int bronze;
-	Medals()
-	{
-		gold = 0;
-		silver = 0;
-		bronze = 0;
-	}
-};
-istream &operator>>(istream &input_stream, Medals &medals)
-{
-	input_stream >> medals.gold >> medals.silver >> medals.bronze;
-	return (input_stream);
-}
-ostream &operator<<(ostream &os, Medals &medals)
-{
-	os << "gold(" << medals.gold << "), ";
-	os << "silver(" << medals.silver << "), ";
-	os << "bronze(" << medals.bronze << ").";
-	return (os);
-}
+vector<double> games_scoring {1, 0, 0};
+/*state*/
 /*state-struct*/
 struct State
 {
-	vector<int> players_final_scores;
-	vector<vector<Medals>> players_medals;
+	int hurdle_pos, hurdle_stunnde, hurdle_turn;
+	int archery_x, archery_y;
+	int diving_point, diving_combo;
 	vector<string> games_gpu;
-	vector<vector<int>> games_regs;
-	State()
-	{
-		players_final_scores = vector<int>(3, 0);
-		players_medals = vector<vector<Medals>>(3, vector<Medals>(3, Medals()));
-		games_gpu = vector<string>(3);
-		games_regs = vector<vector<int>>(3, vector<int>(7, 0));
-	}
-	State(const State &other)
-	{
-		players_final_scores = other.players_final_scores;
-		players_medals = other.players_medals;
-		games_gpu = other.games_gpu;
-		games_regs = other.games_regs;
-	}
-	State &operator=(const State &other)
-	{
-		players_final_scores = other.players_final_scores;
-		players_medals = other.players_medals;
-		games_gpu = other.games_gpu;
-		games_regs = other.games_regs;
-		return *this;
-	}
 };
 ostream &operator<<(ostream &os, State &state)
 {
-	os << "---------------" << endl;
-	os << "players-state-info: " << endl;
-	for (int player = 0; player < 3; player++)
-	{
-		os << "player-" << player << ", final-score=(";
-		os << state.players_final_scores[player] << ")." << endl;
-		for (int game = 0; game < 3; game++)
-		{
-			os << "game-" << game << "-medals: ";
-			os << state.players_medals[player][game] << endl;
-		}
-		os << "---------------" << endl;
-	}
-	os << "games-state-info: " << endl;
-	os << "---------------" << endl;
-	for (int game = 0; game < 3; game++)
-	{
-		os << "game-" << game << endl;
-		os << "gpu: " << state.games_gpu[game] << endl;
-		os << "regs: ";
-		for (int r = 0; r < 7; r++)
-		{
-			os << state.games_regs[game][r] << " \n"[r+1 == 7];
-		}
-	}
+	for (int i = 0; i < 3; i++)
+		os << "gpu: " << state.games_gpu[i] << endl;
+	os << "hurdle: ";
+	os << "p:" << state.hurdle_pos << " s:" << state.hurdle_stunnde;
+	os << " t:" << state.hurdle_turn << endl;
+	os << "archery: x:";
+	os << state.archery_x << " y:" << state.archery_y << endl;
+	os << "diving: p:";
+	os << state.diving_point << " c:" << state.diving_combo << endl;
 	return (os);
 }
-/**/
 /*game-utils*/
-pair<float, bool> get_value_and_terminated(State &state, string &_action)
+pair<double, bool> get_value_and_terminated(State &state)
 {
-	(void)_action;
 	int games_over = 0;
 	for (int game = 0; game < 3; game++)
 		games_over += (state.games_gpu[game] == "GAME_OVER");
-	if (games_over < 3)	return {0, false};
+	if (games_over < 3)	return {0.0f, false};
 	//
-	/* here calculate the score and get my ranking position */
-	vector<pair<int, int>> players_scores(3);
-	for (int player = 0; player < 3; player++)
-	{
-		players_scores[player].second = player;
-		players_scores[player].first = state.players_final_scores[player];
-	}
-	sort(players_scores.rbegin(), players_scores.rend());
-	for (int player = 0; player < 3; player++)
-	{
-		players_scores[player].first = players_scores[player].second;
-		players_scores[player].second = player;
-	}
-	sort(players_scores.begin(), players_scores.end());
-	vector<float> values = {1.0f, 0.5f, 0};
-	return {values[players_scores[player_idx].second], true};
+	double hurlde_score = 1.0f - (state.hurdle_turn / 30.0f);
+	double archery_distance = state.archery_x*state.archery_x + 
+		state.archery_y*state.archery_y;
+	double archery_score = 1.0f - (archery_distance / (20.0f*20.0f + 20.0f*20.0f));
+	double diving_score = (state.diving_point * 1.0f) / 120.0f;
+	double resultStateScore = (
+		hurlde_score * games_scoring[0]
+		+ archery_score * games_scoring[1]
+		+ diving_score * games_scoring[2]
+	);
+	// cout << state << endl;
+	return {resultStateScore, true};
 }
 
-string get_random_action()
-{
-	string actions = "UDLR";
-	string rand_action;
-	for (int i = 0; i < 3; i++)
-		rand_action += actions[rand() % 4];
-	return rand_action;
-}
-
-void update_archery(State &state, const string &action)
-{
-	string &winds = state.games_gpu[1];
-	vector<int> &regs = state.games_regs[1];
-
-	if (winds == "GAME_OVER") return ;
-
-	for (int player = 0; player < 3; player++)
-	{
-		char act = action[player];
-		int offcet = winds[0] - '0';
-		int dx = 0;
-		int dy = 0;
-		if (act == 'D') dy = offcet;
-		else if (act == 'L') dx = -offcet;
-		else if (act == 'R') dx = offcet;
-		else if (act == 'U') dy = -offcet;
-		int &posx = regs[player*2];
-		int &posy = regs[player*2 + 1];
-		posx += dx;
-		posy += dy;
-		if (posx > 20) posx = 20;
-		if (posx < -20) posx = -20;
-		if (posy > 20) posy = 20;
-		if (posy < -20) posy = -20;
-	}
-
-	if (winds.size() > 1) winds = winds.substr(1, winds.size() - 1);
-	else 
-	{
-		winds = "GAME_OVER";
-		map<double, vector<int>> result;
-		for (int player = 0; player < 3; player++)
-		{
-			int posx = regs[player*2], posy = regs[player*2+1];
-			double dis = posx*posx + posy*posy;
-			result[dis].push_back(player);
-		}
-		int rank = 0;
-		for (auto i = result.begin(); i != result.end(); i++)
-		{
-			for (auto p : i->second)
-			{
-				if (rank == 0)
-					state.players_medals[p][1].gold += 1;
-				else if (rank == 1)
-					state.players_medals[p][1].silver += 1;
-				else
-					state.players_medals[p][1].bronze += 1;
-			}
-			rank++;
-		}
-	}
-}
-
-void update_hurdle_race(State &state, const string &action)
+void update_hurdle_race(State &state,  char action)
 {
 	string &gpu = state.games_gpu[0];
-	vector<int> &regs = state.games_regs[0];
-	//
 	if (gpu == "GAME_OVER") return;
-	//
 	bool finished = false;
-	for (int player = 0; player < 3; player++)
+	pair<int, bool> act;
+	if (action == 'R') act = {3, false};
+	else if (action == 'U') act = {2, true};
+	else if (action == 'D') act = {2, false};
+	else if (action == 'L') act = {1, false};
+	int &pos = state.hurdle_pos;
+	int &stunned = state.hurdle_stunnde;
+	if (stunned) stunned -= 1;
+	else
 	{
-		pair<int, bool> act;
-		if (action[player] == 'R') act = {3, false};
-		else if (action[player] == 'U') act = {2, true};
-		else if (action[player] == 'D') act = {2, false};
-		else if (action[player] == 'L') act = {1, false};
-		int &pos = regs[player];
-		int &stunned = regs[player + 3];
-		if (stunned)
-		{
-			stunned -= 1;
-			continue;
-		}
 		for (int m = 1; m <= act.first; m++)
 		{
 			pos = min(29, pos+1);
@@ -236,354 +100,286 @@ void update_hurdle_race(State &state, const string &action)
 			act.second = false;
 		}
 	}
-	if (finished)
-	{
-		gpu = "GAME_OVER";
-		map<double, vector<int>> result;
-		for (int player = 0; player < 3; player++)
-		{
-			result[-1 * regs[player]].push_back(player);
-		}
-		int rank = 0;
-		for (auto i = result.begin(); i != result.end(); i++)
-		{
-			for (auto p : i->second)
-			{
-				if (rank == 0)
-					state.players_medals[p][0].gold += 1;
-				else if (rank == 1)
-					state.players_medals[p][0].silver += 1;
-				else
-					state.players_medals[p][0].bronze += 1;
-			}
-			rank++;
-		}
-	}
+	//
+	state.hurdle_turn += 1;
+	if (finished) gpu = "GAME_OVER";
 }
 
-void update_diving(State &state, const string &action)
+void update_archery(State &state, char action)
+{
+	string &winds = state.games_gpu[1];
+	if (winds == "GAME_OVER") return ;
+	char act = action;
+	int offcet = winds[0] - '0';
+	int dx = 0;
+	int dy = 0;
+	if (act == 'D') dy = offcet;
+	else if (act == 'L') dx = -offcet;
+	else if (act == 'R') dx = offcet;
+	else if (act == 'U') dy = -offcet;
+	int &posx = state.archery_x;
+	int &posy = state.archery_y;
+	posx += dx;
+	posy += dy;
+	if (posx > 20) posx = 20;
+	if (posx < -20) posx = -20;
+	if (posy > 20) posy = 20;
+	if (posy < -20) posy = -20;
+	if (winds.size() > 1) winds = winds.substr(1, winds.size() - 1);
+	else winds = "GAME_OVER";
+}
+
+void update_diving(State &state, char action)
 {
 	string &gpu = state.games_gpu[2];
-	vector<int> &regs = state.games_regs[2];
 	if (gpu == "GAME_OVER") return ;
-	for (int player = 0; player < 3; player++)
+	int &point = state.diving_point;
+	int &combo = state.diving_combo;
+	if (action == gpu[0])
 	{
-		int &point = regs[player];
-		int &combo = regs[player + 3];
-		if (action[player] == gpu[0])
-		{
-			combo += 1;
-			point += combo;
-		}
-		else combo = 0;
+		combo += 1;
+		point += combo;
 	}
+	else combo = 0;
 	//
 	if (gpu.size() > 1) gpu = gpu.substr(1, gpu.size() - 1);
-	else
-	{
-		gpu = "GAME_OVER";
-		map<double, vector<int>> result;
-		for (int player = 0; player < 3; player++)
-		{
-			result[regs[player]].push_back(player);
-		}
-		int rank = 0;
-		for (auto i = result.begin(); i != result.end(); i++)
-		{
-			for (auto p : i->second)
-			{
-				if (rank == 0)
-					state.players_medals[p][2].gold += 1;
-				else if (rank == 1)
-					state.players_medals[p][2].silver += 1;
-				else
-					state.players_medals[p][2].bronze += 1;
-			}
-			rank++;
-		}
-	}
+	else gpu = "GAME_OVER";
 }
 
-void update_final_score(State &state)
-{
-	for (int p = 0; p < 3; p++)
-	{
-		state.players_final_scores[p] = 1;
-		for (int g = 0; g < 3; g++)
-		{
-			state.players_final_scores[p] *= (state.players_medals[p][g].gold * 3
-				+ state.players_medals[p][g].silver);
-		}
-	}
-}
-
-State get_next_state(const State &state, const string &action)
+State get_next_state(const State &state, char action)
 {
 	State nextState = state;
 	update_hurdle_race(nextState, action);
 	update_archery(nextState, action);
 	update_diving(nextState, action);
-	update_final_score(nextState);
 	return (nextState);
 }
-/*node-for-mcts-class*/
+/*mcts-class*/
 struct Node
 {
 	State state;
-	string action_taken;
-	vector<string> expandable_actions;
+	char action_taken;
+	int expandable_index;
 	Node *parent;
 	vector<Node*> childrens;
-	float visit_count;
-	float value_sum;
-	//
-	Node(const State &_state,
+	double visit_count;
+	double value_sum;
+	int depth;
+};
+Node *newNode(const State &_state,
 		Node *_parent = nullptr,
-		const string &_action_taken = "")
-	{
-		state = _state;
-		parent = _parent;
-		action_taken = _action_taken;
-		visit_count = 0;
-		value_sum = 0;
-		expandable_actions = mcts_actions_list;
-	}
-
-	bool is_fully_expanded()
-	{
-		return (expandable_actions.empty() && childrens.size() > 0);
-	}
-
-	float get_ucb(Node *child)
-	{
-		float qv = (child->value_sum / child->visit_count);
-		return qv + (1.41f * (sqrt(visit_count) / (child->visit_count * 1.0f)));
-	}
-
-	Node *select()
-	{
-		map<char, pair<Node*, float>> ucb;
-		for (auto i : childrens)
-		{
-			float curUcb = this->get_ucb(i);
-			//
-			if (ucb.count(i->action_taken[player_idx]))
-			{
-				if (ucb[i->action_taken[player_idx]].second > curUcb)
-				{
-					ucb[i->action_taken[player_idx]].first = i;
-					ucb[i->action_taken[player_idx]].second = curUcb;
-				}
-			}
-			else
-			{
-				ucb[i->action_taken[player_idx]].first = i;
-				ucb[i->action_taken[player_idx]].second = curUcb;
-			}
-		}
-		//
-		Node *ans = nullptr;
-		float ansUcb = -INF;
-		for (auto [i, j] : ucb)
-			if (j.second > ansUcb)
-			{
-				ans = j.first;
-				ansUcb = j.second;
-			}
-		//
-		return (ans);
-	}
-
-	Node *expand()
-	{
-		int r = rand() % expandable_actions.size();
-		string action = expandable_actions[r];
-		swap(expandable_actions[r], expandable_actions[expandable_actions.size() - 1]);
-		expandable_actions.pop_back();
-		//
-		childrens.push_back(new Node(get_next_state(state, action), this, action));
-		return (childrens.back());
-	}
-
-	float simulate()
-	{
-		State curState = state;
-		while (true)
-		{
-			auto x = get_value_and_terminated(curState, action_taken);
-			if (x.second) return (x.first);
-			curState = get_next_state(curState, get_random_action());
-		}
-		return (0.0f);
-	}
-
-	void backpropagate(float value)
-	{
-		value_sum += value;
-		visit_count += 1;
-		if (parent) parent->backpropagate(value);
-	}
-};
-/*mcts-class*/
-class MCTS
+		char _action_taken = '\0', int _depth = 0)
 {
-public:
-
-	void debug(Node *it)
-	{
-		cerr << "action-taken: " << it->action_taken << ", ";
-		cerr << "parent-adress: " << it->parent << endl;
-		cerr << "Value=" << it->value_sum << ", ";
-		cerr << "Visits=" << it->visit_count << endl;
-		cerr << it->state << endl;
-
-		for (auto i : it->childrens) debug(i);
-	}
-
-	string search(int number_of_iterations, State &state)
-	{
-		Node *root = new Node(state);
-
-		for (int i = 0; i < number_of_iterations; i++)
-		{
-			Node *it = root;
-
-			// debug(it);
-
-			while (it->is_fully_expanded())
-				it = it->select();
-
-			pair<float, bool> x = get_value_and_terminated(it->state, it->action_taken);
-			float value = x.first;
-			bool is_terminated = x.second;
-
-			if (!is_terminated)
-			{
-				it = it->expand();
-				value = it->simulate();
-			}
-
-			it->backpropagate(value);
-		}
-
-		// map<char, vector<float>> prob;
-
-		// float visit_sum = 0;
-		// for (auto i : root->childrens)
-		// {
-		// 	visit_sum += i->visit_count;
-		// 	prob[i->action_taken[player_idx]].push_back(i->visit_count);
-		// }
-
-		Node *it = root->select();
-		char ansAction = it->action_taken[player_idx];
-		// float ansProb = -INF;
-
-		// for (auto i = prob.begin(); i != prob.end(); i++)
-		// {
-		// 	float curProb = INF;
-		// 	for (auto &j : i->second)
-		// 	{
-		// 		j /= visit_sum;
-		// 		curProb = min(curProb, j);
-		// 	}
-		// 	if (curProb > ansProb)
-		// 	{
-		// 		ansProb = curProb;
-		// 		ansAction = i->first;
-		// 	}
-		// }
-
-		if (ansAction == 'U') return "UP";
-		else if (ansAction == 'D') return "DOWN";
-		else if (ansAction == 'L') return "LEFT";
-		else if (ansAction == 'R') return "RIGHT";
-
-		return (string(1, ansAction));
-	}
-};
-/* solve function*/
-void solve(State &state)
-{
-	MCTS mcts;
-
-	string mcts_bestAction = mcts.search(300, state);
-
-	cout << mcts_bestAction << endl;
+	Node *node = new Node();
+	node->depth = _depth;
+	node->state = _state;
+	node->parent = _parent;
+	node->action_taken = _action_taken;
+	node->visit_count = 0;
+	node->value_sum = 0;
+	node->expandable_index = 0;
+	return node;
 }
 
-/*main-function*/
-void generate_mcts_actions_list(const string &acts = "UDRL", string cur = "")
+bool is_fully_expanded(Node *node)
 {
-	if (cur.size() == 3)
+	return (node->expandable_index >= 4 && node->childrens.size() > 0);
+}
+
+double get_ucb(Node *parent, Node *child)
+{
+	double qv = (child->value_sum / child->visit_count);
+	return qv + (1.41f * (sqrt(parent->visit_count) / (child->visit_count * 1.0f)));
+}
+
+Node *select(Node *node)
+{
+	Node *ans = nullptr;
+	double ucb = -INF;
+	for (auto i : node->childrens)
 	{
-		mcts_actions_list.push_back(cur);
-		return ;
+		double curUcb = get_ucb(node, i);
+		if (curUcb > ucb)
+		{
+			ucb = curUcb;
+			ans = i;
+		}
 	}
-	for (char c : acts)
-		generate_mcts_actions_list(acts, cur + c);
+	return (ans);
+}
+
+Node *expand(Node *node)
+{
+	char action = mcts_actions_list[node->expandable_index++];
+	//
+	State childState = get_next_state(node->state, action);
+	node->childrens.push_back(newNode(childState, node, action, node->depth + 1));
+	return (node->childrens.back());
+}
+
+double simulate(Node *node)
+{
+	State curState = node->state;
+	while (true)
+	{
+		auto x = get_value_and_terminated(curState);
+		if (x.second) return (x.first);
+		curState = get_next_state(curState, mcts_actions_list[rand() % 4]);
+	}
+	return (0.0f);
+}
+
+void backpropagate(Node *node, double value)
+{
+	node->value_sum += value;
+	node->visit_count += 1;
+	if (node->parent) backpropagate(node->parent, value);
+}
+
+void debug(Node *root)
+{
+	cerr << root->value_sum << " " << root->visit_count << endl;
+	cerr << root->state << endl;
+
+	for (auto i : root->childrens)
+	{
+		cerr << i->action_taken << " ";
+		cerr << i->value_sum << " " << i->visit_count << endl;
+		cerr << i->state << endl;
+	}
+}
+
+string search(int number_of_iterations, State &state)
+{
+	std::chrono::high_resolution_clock::time_point start_time, end_time;
+	start_time = std::chrono::high_resolution_clock::now();
+	//
+	Node *root = newNode(state);
+	for (int i = 0; i < number_of_iterations; i++)
+	{
+		Node *it = root;
+		while (is_fully_expanded(it))
+			it = select(it);
+		
+		pair<double, bool> x = get_value_and_terminated(it->state);
+		double value = x.first;
+		bool is_terminated = x.second;
+
+		if (!is_terminated)
+		{
+			it = expand(it);
+			value = simulate(it);
+		}
+
+		backpropagate(it, value);
+	}
+	//
+	// debug(root);
+
+	map<char, double> porb;
+	int sum = 0;
+	for (auto i : root->childrens)
+	{
+		porb[i->action_taken] += i->visit_count;
+		sum += i->visit_count;
+	}
+	//
+	char ansAct = 'X';
+	float ansProb = -INF;
+	for (auto [i, v] : porb)
+	{
+		v /= (sum * 1.0f);
+		if (v > ansProb)
+		{
+			ansProb = v;
+			ansAct = i;
+		}
+	}
+	//
+	map<char, string> mp;
+	mp['U'] = "UP";
+	mp['D'] = "DOWN";
+	mp['L'] = "LEFT";
+	mp['R'] = "RIGHT";
+	//
+	end_time = std::chrono::high_resolution_clock::now();
+	auto duration 
+		= std::chrono::duration_cast<std::chrono::milliseconds>
+			(end_time - start_time).count();
+	cerr << "duration: " << duration << endl;
+	//
+	return (mp[ansAct]);
+}
+
+void solve(State &state, int turn)
+{
+	cerr << state << endl;
+
+	string action = search(1500, state);
+
+	cout << action << endl;
+
+	state = get_next_state(state, action[0]);
+
+	cerr << state << endl;
 }
 
 int main()
 {
-	cin >> player_idx; cin.ignore();
-	int nb_games;
+	srand(time(0));
+	cin >> player_idx;
+	int nb_games, turn = 0;
 	cin >> nb_games; cin.ignore();
-	generate_mcts_actions_list();
-
-	// game loop
-	while (true)
+	//
+	int hurdle_race_turn = 0;
+	//
+	while (turn < MAXTURNS)
 	{
 		State state;
-
+		state.games_gpu = vector<string>(3);
 		for (int i = 0; i < 3; i++)
 		{
 			string score_info;
 			getline(cin, score_info);
-
-			stringstream S(score_info);
-			S >> state.players_final_scores[i];
-			for (int g = 0; g < 4; g++)
-			{
-				int gold, silve, bronze;
-				S >> gold >> silve >> bronze;
-				if (g==0 || g == 1)
-				{
-					state.players_medals[i][g].gold = gold;
-					state.players_medals[i][g].silver = silve;
-					state.players_medals[i][g].bronze = bronze;
-				}
-				else if (g == 3)
-				{
-					state.players_medals[i][2].gold = gold;
-					state.players_medals[i][2].silver = silve;
-					state.players_medals[i][2].bronze = bronze;
-				}
-			}
 		}
-
-		for (int g = 0; g < nb_games; g++) 
+		for (int i = 0; i < 4; i++)
 		{
 			string gpu;
+			vector<int> regs(7);
 			cin >> gpu;
-			vector<int> reg(7);
-			for (int j = 0; j < 7; j++) cin >> reg[j];
-
-
-			if (g==0 || g == 1)
-			{
-				state.games_gpu[g] = gpu;
-				state.games_regs[g] = reg;
-			}
-			else if (g == 3)
-			{
-				state.games_gpu[2] = gpu;
-				state.games_regs[2] = reg;
-			}
-
+			for (int r = 0; r < 7; r++) cin >> regs[r];
 			cin.ignore();
-		}
 
-		solve(state);
+			if (i == 0 || i == 1 || i == 3)
+			{
+				int idx = i;
+				if (idx == 3) idx -= 1;
+
+				if (i == 0)
+				{
+					if (gpu == "GAME_OVER") hurdle_race_turn = 0;
+					else state.hurdle_turn = hurdle_race_turn++;
+
+					state.hurdle_pos = regs[player_idx];
+					state.hurdle_stunnde = regs[player_idx + 3];
+				}
+				else if (i == 1)
+				{
+					state.archery_x = regs[player_idx*2];
+					state.archery_y = regs[player_idx*2+1];
+				}
+				else
+				{
+					state.diving_point = regs[player_idx];
+					state.diving_combo = regs[player_idx+3];
+				}
+				//
+				state.games_gpu[idx] = gpu;
+			}
+		}
+		//
+		solve(state, turn++);
 	}
+	//
+	return (0);
 }
