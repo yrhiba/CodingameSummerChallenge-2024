@@ -2,9 +2,9 @@
 
 /*start*/
 // * Optimization ------------------------------------------------------------------------------------------------
-# pragma GCC optimize("Ofast","unroll-loops", "omit-frame-pointer", "inline")
-# pragma GCC option("arch=native", "tune=native", "no-zero-upper")
-# pragma GCC target("rdrnd", "popcnt", "avx", "bmi2")
+// # pragma GCC optimize("Ofast","unroll-loops", "omit-frame-pointer", "inline")
+// # pragma GCC option("arch=native", "tune=native", "no-zero-upper")
+// # pragma GCC target("rdrnd", "popcnt", "avx", "bmi2")
 // * -------------------------------------------------------------------------------------------------------------
 
 #include <iostream>

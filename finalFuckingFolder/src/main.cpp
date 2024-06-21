@@ -6,7 +6,7 @@
 
 void solve(State &state)
 {
-	string action = search(10000, state);
+	string action = search(5000, state);
 	cout << action << endl;
 }
 
