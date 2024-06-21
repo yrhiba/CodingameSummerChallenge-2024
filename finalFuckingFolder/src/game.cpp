@@ -61,8 +61,8 @@ void update_archery(State &state, char action)
 	if (posx < -20) posx = -20;
 	if (posy > 20) posy = 20;
 	if (posy < -20) posy = -20;
-	state.diving_gpu.pop_back();
-	if (state.diving_gpu.empty()) state.diving_gpu = "GAME_OVER";
+	state.archery_gpu.pop_back();
+	if (state.archery_gpu.empty()) state.archery_gpu = "GAME_OVER";
 }
 
 void update_diving(State &state, char action)
@@ -77,7 +77,7 @@ void update_diving(State &state, char action)
 	else state.diving_combo = 0;
 	//
 	state.diving_gpu.pop_back();
-
+	//
 	if (state.diving_gpu.empty()) state.diving_gpu = "GAME_OVER";
 }
 
@@ -88,4 +88,29 @@ State get_next_state(const State &state, char action)
 	update_archery(nextState, action);
 	update_diving(nextState, action);
 	return (nextState);
+}
+
+pair<float, bool> get_value_and_terminated(State &state)
+{
+	int games_over = 0;
+	games_over += (state.hurdle_gpu == "GAME_OVER");
+	games_over += (state.diving_gpu == "GAME_OVER");
+	games_over += (state.archery_gpu == "GAME_OVER");
+	//
+	if (games_over < 3)	return {0.0f, false};
+	//
+	double hurlde_score = 1.0f - (state.hurdle_turn / 50.0f);
+
+	double archery_distance = state.archery_x*state.archery_x + 
+		state.archery_y*state.archery_y;
+
+	double archery_score = 1.0f - (sqrt(archery_distance * 1.0f) / sqrt(20.0f*20.0f + 20.0f*20.0f));
+
+	double diving_score = (state.diving_point * 1.0f) / 120.0f;
+
+	double resultStateScore = (
+		archery_score + diving_score
+	) / 2.0f;
+
+	return {resultStateScore, true};
 }

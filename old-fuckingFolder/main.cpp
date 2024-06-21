@@ -166,6 +166,7 @@ struct Node
 	double value_sum;
 	int depth;
 };
+
 Node *newNode(const State &_state,
 		Node *_parent = nullptr,
 		char _action_taken = '\0', int _depth = 0)

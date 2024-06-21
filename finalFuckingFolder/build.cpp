@@ -23,6 +23,7 @@ vector<string> files =
 
 	/*main-file*/
 	"src/game.cpp",
+	"src/search.cpp",
 	"src/main.cpp",
 };
 

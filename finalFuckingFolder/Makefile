@@ -3,10 +3,10 @@
 #                                                         :::      ::::::::    #
 #    Makefile                                           :+:      :+:    :+:    #
 #                                                     +:+ +:+         +:+      #
-#    By: yrhiba <yrhiba@student.42.fr>              +#+  +:+       +#+         #
+#    By: yrhiba <yrhiba@student.1337.ma>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/12/21 16:59:00 by yrhiba            #+#    #+#              #
-#    Updated: 2024/06/20 20:49:17 by yrhiba           ###   ########.fr        #
+#    Updated: 2024/06/20 23:58:41 by yrhiba           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -26,7 +26,7 @@ build :
 run : $(SCRIPT)
 	@mkdir -p prod
 	./$(SCRIPT)
-	cat ./prod/code.cpp | xsel --clipboard --input
+	cat ./prod/code.cpp | pbcopy
 
 clean:
 	@rm -rf .vscode .DS_Store

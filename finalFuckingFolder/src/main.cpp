@@ -5,11 +5,8 @@
 
 void solve(State &state)
 {
-	cerr << state << endl;
-
-	State nx = get_next_state(state, 'U');
-
-	cerr << nx << endl;
+	string action = search(1500, state);
+	cout << action << endl;
 }
 
 int main()
@@ -56,6 +53,6 @@ int main()
 		reverse(rall(state.archery_gpu));
 		reverse(rall(state.diving_gpu));
 		solve(state);
-		break;
+		// break;
 	}
 }
