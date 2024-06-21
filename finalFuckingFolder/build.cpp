@@ -21,9 +21,15 @@ vector<string> files =
 	"incs/header.hpp",
 	"incs/state.hpp",
 
-	/*main-file*/
+	/* best moves */
+	"src/archery_bestMove.cpp",
+
+	/* */
 	"src/game.cpp",
+	"src/scoring.cpp",
 	"src/search.cpp",
+
+	/*main-file*/
 	"src/main.cpp",
 };
 

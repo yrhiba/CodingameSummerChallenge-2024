@@ -1,12 +1,27 @@
 #include "header.hpp"
 #include "state.hpp"
-
+string archery_getBestMove(string &gpu, int x, int y);
 
 /*start*/
 
 void solve(State &state)
 {
-	string action = search(5000, state);
+	/* evaluate weights */
+
+
+	/* take an action based on mcts or best-move */
+
+	string action;
+
+	if (scoring.archery_score_weight == 1.0f)
+	{
+		action = archery_getBestMove(state.archery_gpu, state.archery_x, state.archery_y);
+	}
+	else
+	{
+		action = search(10000, state);
+	}
+
 	cout << action << endl;
 }
 

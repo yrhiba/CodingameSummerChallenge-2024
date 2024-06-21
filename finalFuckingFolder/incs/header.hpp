@@ -1,12 +1,6 @@
 #pragma once
 
 /*start*/
-// * Optimization ------------------------------------------------------------------------------------------------
-// # pragma GCC optimize("Ofast","unroll-loops", "omit-frame-pointer", "inline")
-// # pragma GCC option("arch=native", "tune=native", "no-zero-upper")
-// # pragma GCC target("rdrnd", "popcnt", "avx", "bmi2")
-// * -------------------------------------------------------------------------------------------------------------
-
 #include <iostream>
 #include <vector>
 #include <list>
@@ -17,7 +11,12 @@
 #include <cstdlib>
 #include <chrono>
 #include <cmath>
+#include <map>
 using namespace std;
+
+const string directions[8] {"D","R","U","L","DR","DL","TL","TR"};
+const int dr[8] {1, 0, -1, 0, 1, 1, -1, -1};
+const int dc[8] {0, 1, 0, -1, 1, -1, -1, 1};
 
 # define all(x) begin(x), end(x)
 # define rall(x) rbegin(x), rend(x)
@@ -36,31 +35,20 @@ struct Data
 
 struct Scoring
 {
-	/* 100% priotizy */
-	float hurdle_score_percent; /* 0 -> 100% */
-	float archery_score_percent; /* 0 -> 100% */
-	float diving_score_percent; /* 0 -> 100% */
-
-	/* mini-game: scoring */
-
-	/*
-		hurdle: 0 -> 1
-	*/
-	/*
-		archery: 0 -> 1
-	*/
-	/*
-		diving: 0 -> 1
-	*/
+	/* evaluate importance of each mini-game */
+	float hurdle_score_weight = 0.0f; /* 0 -> 100% */
+	float archery_score_weight = 1.0f; /* 0 -> 100% */
+	float diving_score_weight = 0.0f; /* 0 -> 100% */
 
 	double finalScore(float hurdle_scroe, float archery_score, float diving_score)
 	{
-		hurdle_scroe *= hurdle_score_percent;
-		archery_score *= archery_score_percent;
-		diving_score *= diving_score_percent;
+		hurdle_scroe *= hurdle_score_weight;
+		archery_score *= archery_score_weight;
+		diving_score *= diving_score_weight;
 		return hurdle_scroe + archery_score + diving_score;
 	}
-};
+
+} scoring;
 
 /*end*/
 
