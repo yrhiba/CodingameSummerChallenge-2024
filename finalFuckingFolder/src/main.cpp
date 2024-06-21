@@ -1,19 +1,22 @@
 #include "header.hpp"
 #include "state.hpp"
 
+
 /*start*/
 
 void solve(State &state)
 {
-	string action = search(1500, state);
+	string action = search(10000, state);
 	cout << action << endl;
 }
 
 int main()
 {
 	srand(time(0));
+
 	cin >> player_idx >> nb_games;
 	cin.ignore();
+
 	while (true)
 	{
 		State state;
@@ -36,6 +39,7 @@ int main()
 				state.hurdle_pos = regs[player_idx];
 				state.hurdle_stunned = regs[player_idx+3];
 				state.hurdle_turn = 0;
+				precalcHurdleData(state.hurdle_gpu, state.hurdle_pos, state.hurdle_stunned);
 			}
 			else if (i == 1)
 			{
@@ -48,11 +52,11 @@ int main()
 				state.diving_gpu = gpu;
 				state.diving_point = regs[player_idx];
 				state.diving_combo = regs[player_idx+3];
+				precalcDivingData(gpu, state.diving_point, state.diving_combo);
 			}
 		}
 		reverse(rall(state.archery_gpu));
 		reverse(rall(state.diving_gpu));
 		solve(state);
-		// break;
 	}
 }

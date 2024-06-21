@@ -99,18 +99,84 @@ pair<float, bool> get_value_and_terminated(State &state)
 	//
 	if (games_over < 3)	return {0.0f, false};
 	//
-	double hurlde_score = 1.0f - (state.hurdle_turn / 50.0f);
+	double hurlde_score;
 
-	double archery_distance = state.archery_x*state.archery_x + 
-		state.archery_y*state.archery_y;
+	if ((_data.maxHurdleTurns - _data.minHurdleTurns) != 0)
+	{
+		hurlde_score = ((_data.maxHurdleTurns - state.hurdle_turn) * 1.0f)
+				/ ((_data.maxHurdleTurns - _data.minHurdleTurns) * 1.0f);
+	}
+	else hurlde_score = 0.0f;
 
-	double archery_score = 1.0f - (sqrt(archery_distance * 1.0f) / sqrt(20.0f*20.0f + 20.0f*20.0f));
+	double archery_distance = state.archery_x * state.archery_x + 
+		state.archery_y * state.archery_y;
 
-	double diving_score = (state.diving_point * 1.0f) / 120.0f;
+	double archery_score = 1.0f - (sqrt(archery_distance * 1.0f)
+			/ sqrt(20.0f * 20.0f + 20.0f * 20.0f));
 
-	double resultStateScore = (
-		archery_score + diving_score
-	) / 2.0f;
+	double diving_score = 1.0f - (((_data.maxDivingScore - state.diving_point) * 1.0f)
+		/ ((_data.maxDivingScore - _data.minDivingScore) * 1.0f));
 
-	return {resultStateScore, true};
+	double resultStateScore = hurlde_score + archery_score + diving_score;
+
+	return {resultStateScore / 3.0f, true};
+}
+
+void precalcHurdleData(string &gpu, int pos, int stunned)
+{
+	if (gpu == "GAME_OVER") return ;
+
+	pair<int, int> cur;
+	//
+	_data.maxHurdleTurns = 0;
+	cur = {pos, stunned};
+	for (; cur.first < 29; )
+	{
+		_data.maxHurdleTurns += 1;
+		if (cur.second) cur.second -= 1;
+		else
+		{
+			cur.first += 1;
+			if (cur.first < gpu.size() && gpu[cur.first] == '#')
+			{
+				cur.second = 2;
+				continue;
+			}
+		}
+	}
+	//
+	_data.minHurdleTurns = 0;
+	cur = {pos, stunned};
+	for (; cur.first < 29; )
+	{
+		_data.minHurdleTurns += 1;
+		if (cur.second) cur.second -= 1;
+		else
+		{
+			for (int m = 1; m <= 3; m++)
+			{
+				cur.first = min(29, cur.first + 1);
+				if (cur.first == 29) break;
+				if (cur.first < gpu.size() && gpu[cur.first] == '#')
+				{
+					if (m == 1) cur.first += 1;
+					else if (m == 2) cur.first -= 1;
+					else if (m == 3) cur.first -= 1;
+					break;
+				}
+			}
+		}
+	}
+}
+
+void precalcDivingData(string &gpu,  int point, int combo)
+{
+	if (gpu == "GAME_OVER") return ;
+	_data.maxDivingScore = point;
+	for (char c : gpu)
+	{
+		combo += 1;
+		_data.maxDivingScore += combo;
+	}
+	_data.minDivingScore = point;
 }

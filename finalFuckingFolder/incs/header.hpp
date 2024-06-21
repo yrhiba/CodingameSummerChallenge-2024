@@ -1,6 +1,11 @@
 #pragma once
 
 /*start*/
+// * Optimization ------------------------------------------------------------------------------------------------
+# pragma GCC optimize("Ofast","unroll-loops", "omit-frame-pointer", "inline")
+# pragma GCC option("arch=native", "tune=native", "no-zero-upper")
+# pragma GCC target("rdrnd", "popcnt", "avx", "bmi2")
+// * -------------------------------------------------------------------------------------------------------------
 
 #include <iostream>
 #include <vector>
@@ -19,6 +24,16 @@ using namespace std;
 
 int player_idx, nb_games;
 
+struct Data
+{
+	int maxHurdleTurns;
+	int minHurdleTurns;
+
+	int maxDivingScore;
+	int minDivingScore;
+
+} _data;
+
 struct Scoring
 {
 	/* 100% priotizy */
@@ -26,7 +41,8 @@ struct Scoring
 	float archery_score_percent; /* 0 -> 100% */
 	float diving_score_percent; /* 0 -> 100% */
 
-	/* mini-game: scoring 0 -> 1 | */
+	/* mini-game: scoring */
+
 	/*
 		hurdle: 0 -> 1
 	*/
@@ -54,3 +70,8 @@ State get_next_state(const State &state, char action);
 pair<float, bool> get_value_and_terminated(State &state);
 
 string search(int number_of_iterations, State &state);
+
+void precalcHurdleData(string &gpu, int pos, int stunned);
+
+void precalcDivingData(string &gpu,  int point, int combo);
+/*game-utils*/

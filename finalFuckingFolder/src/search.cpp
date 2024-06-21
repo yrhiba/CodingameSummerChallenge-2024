@@ -107,6 +107,17 @@ string search(int number_of_iterations, State &state)
 			value = simulate(it);
 		}
 		backpropagate(it, value);
+		//
+		end_time = std::chrono::high_resolution_clock::now();
+		auto duration 
+			= std::chrono::duration_cast<std::chrono::milliseconds>
+				(end_time - start_time).count();
+		//
+		if (duration > 45)
+		{
+			cerr << "breaking-at-duration: " << duration << ", and-iterations: " << i+1 << endl;
+			break;
+		}
 	}
 	//
 	char bestAction = 'U';
@@ -120,13 +131,6 @@ string search(int number_of_iterations, State &state)
 			bestAction = i->action_taken;
 		}
 	}
-	//
-	end_time = std::chrono::high_resolution_clock::now();
-	auto duration 
-		= std::chrono::duration_cast<std::chrono::milliseconds>
-			(end_time - start_time).count();
-	//
-	cerr << "search-duration: " << duration << endl;
 	//
 	if (bestAction == 'U') return "UP";
 	else if (bestAction == 'D') return "DOWN";
