@@ -1,6 +1,6 @@
 #include "header.hpp"
 #include "state.hpp"
-
+pair<float, bool> get_value_and_terminated(State &state);
 /*start*/
 
 struct Node
@@ -70,7 +70,7 @@ double simulate(Node *node)
 	State curState = node->state;
 	while (true)
 	{
-		auto x = get_value_and_terminated(curState);
+		pair<float, bool> x = get_value_and_terminated(curState);
 		if (x.second) return (x.first);
 		curState = get_next_state(curState, "UDLR"[rand() % 4]);
 	}
