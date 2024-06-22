@@ -26,9 +26,6 @@ string archery_getBestMove(string gpu, int x, int y)
 {
 	reverse(all(gpu));
 
-	cerr << gpu << endl;
-	cerr << "archery-getting-best-move" << endl;
-
 	if (gpu.empty() || gpu == "GAME_OVER") return "UP";
 
 	float archery_dp[41][41][16];
@@ -48,8 +45,6 @@ string archery_getBestMove(string gpu, int x, int y)
 			dis = curDis;
 		}
 	}
-
-	cerr << dis << endl;
 
 	if (bestAction == 'U') return "UP";
 	else if (bestAction == 'D') return "DOWN";
