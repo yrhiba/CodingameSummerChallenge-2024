@@ -23,6 +23,8 @@ const int dc[8] {0, 1, 0, -1, 1, -1, -1, 1};
 
 int player_idx, nb_games;
 
+struct State;
+
 struct Data
 {
 	int maxHurdleTurns;
@@ -35,10 +37,9 @@ struct Data
 
 struct Scoring
 {
-	/* evaluate importance of each mini-game */
-	float hurdle_score_weight = 0.0f; /* 0 -> 100% */
-	float archery_score_weight = 1.0f; /* 0 -> 100% */
-	float diving_score_weight = 0.0f; /* 0 -> 100% */
+	float hurdle_score_weight = 0.3f;
+	float archery_score_weight = 0.35f;
+	float diving_score_weight = 0.35f;
 
 	double finalScore(float hurdle_scroe, float archery_score, float diving_score)
 	{
@@ -46,6 +47,19 @@ struct Scoring
 		archery_score *= archery_score_weight;
 		diving_score *= diving_score_weight;
 		return hurdle_scroe + archery_score + diving_score;
+	}
+
+	void evaluate(State &state)
+	{
+		/* evaluate hurdle */
+
+		/* evaluate archery */
+
+		/* evaluate diving */
+	}
+
+	void gamesCheckAndUpdateEmergency()
+	{
 	}
 
 } scoring;
