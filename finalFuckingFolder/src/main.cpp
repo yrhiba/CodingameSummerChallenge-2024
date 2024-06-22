@@ -8,7 +8,6 @@ void solve(State &state)
 {
 	/* evaluate weights */
 
-
 	/* take an action based on mcts or best-move */
 
 	string action;
@@ -27,6 +26,7 @@ void solve(State &state)
 
 int main()
 {
+	cin.tie(0)->sync_with_stdio(0);
 	srand(time(0));
 
 	cin >> player_idx >> nb_games;
