@@ -6,7 +6,7 @@
 #    By: yrhiba <yrhiba@student.1337.ma>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2023/12/21 16:59:00 by yrhiba            #+#    #+#              #
-#    Updated: 2024/06/20 23:58:41 by yrhiba           ###   ########.fr        #
+#    Updated: 2024/06/23 00:06:21 by yrhiba           ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -15,7 +15,7 @@ SCRIPT = makeCodingameFile
 FILES = build.cpp
 
 buildClean:
-	make run
+	make run clean
 
 $(SCRIPT) : $(FILES)
 	@make build
