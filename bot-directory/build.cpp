@@ -26,7 +26,7 @@ vector<string> files =
 
 	/* */
 	"src/game.cpp",
-	"src/garantide.cpp",
+	"src/updateData.cpp",
 	"src/evaluateTerminalState.cpp",
 	"src/search.cpp",
 
