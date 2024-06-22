@@ -23,10 +23,10 @@ vector<string> files =
 
 	/* best moves */
 	"src/archery_bestMove.cpp",
-	"src/garantide.cpp",
 
 	/* */
 	"src/game.cpp",
+	"src/garantide.cpp",
 	"src/scoring.cpp",
 	"src/search.cpp",
 

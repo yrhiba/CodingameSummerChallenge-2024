@@ -2,6 +2,8 @@
 #include "state.hpp"
 string archery_getBestMove(string &gpu, int x, int y);
 void update_hurdle_data(string &gpu, vector<int> &regs);
+void update_archery_data(string &gpu, vector<int> &regs);
+void update_diving_data(string &gpu, vector<int> &regs);
 /*start*/
 
 void solve(State &state)
@@ -61,17 +63,19 @@ int main()
 				state.archery_gpu = gpu;
 				state.archery_x = regs[player_idx*2];
 				state.archery_y = regs[player_idx*2+1];
+				update_archery_data(gpu, regs);
 			}
 			else if (i == 3)
 			{
 				state.diving_gpu = gpu;
 				state.diving_point = regs[player_idx];
 				state.diving_combo = regs[player_idx+3];
-				precalcDivingData(gpu, state.diving_point, state.diving_combo);
+				update_diving_data(gpu, regs);
 			}
 		}
 		reverse(rall(state.archery_gpu));
 		reverse(rall(state.diving_gpu));
+		scoring.evaluate();
 		solve(state);
 	}
 }

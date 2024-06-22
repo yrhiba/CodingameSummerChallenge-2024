@@ -88,7 +88,7 @@ State get_next_state(const State &state, char action)
 	return (nextState);
 }
 
-pair<int, int> precalcHurdleData(string &gpu, int pos, int stunned)
+pair<int, int> getMaxAndMinHurdleTurns(string &gpu, int pos, int stunned)
 {
 	if (gpu == "GAME_OVER") return {1e5, 1e5};
 
@@ -137,14 +137,17 @@ pair<int, int> precalcHurdleData(string &gpu, int pos, int stunned)
 	return (result);
 }
 
-void precalcDivingData(string &gpu,  int point, int combo)
+pair<int, int> getMaxAndMinDivingScores(string &gpu,  int point, int combo)
 {
-	if (gpu == "GAME_OVER") return ;
-	_data.maxDivingScore = point;
+	if (gpu == "GAME_OVER") return {1e5, 1e5};
+
+	int maxDivingScore = point;
+
 	for (char c : gpu)
 	{
 		combo += 1;
-		_data.maxDivingScore += combo;
+		maxDivingScore += combo;
 	}
-	_data.minDivingScore = point;
+
+	return {maxDivingScore, point};
 }
