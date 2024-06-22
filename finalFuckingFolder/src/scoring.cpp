@@ -35,5 +35,5 @@ pair<float, bool> get_value_and_terminated(State &state)
 
 	double resultStateScore = scoring.finalScore(hurlde_score, archery_score, diving_score);
 
-	return {resultStateScore / 3.0f, true};
+	return {resultStateScore, true};
 }
