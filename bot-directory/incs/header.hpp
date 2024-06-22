@@ -12,7 +12,10 @@
 #include <chrono>
 #include <cmath>
 #include <map>
+#include <sstream>
 using namespace std;
+
+# define PRINT_INPUT 1
 
 const string directions[8] {"D","R","U","L","DR","DL","TL","TR"};
 const int dr[8] {1, 0, -1, 0, 1, 1, -1, -1};
@@ -21,7 +24,7 @@ const int dc[8] {0, 1, 0, -1, 1, -1, -1, 1};
 # define all(x) begin(x), end(x)
 # define rall(x) rbegin(x), rend(x)
 
-int player_idx, nb_games;
+int player_idx, nb_games, turn = 0;
 
 struct State;
 
@@ -68,7 +71,7 @@ struct Scoring
 		return hurdle_scroe + archery_score + diving_score;
 	}
 
-	void evaluate()
+	void evaluateAndSetWeights()
 	{
 		float activeGames = (
 			!_data.hurdle_game_over + 
@@ -80,9 +83,10 @@ struct Scoring
 		archery_score_weight = !_data.archery_game_over ? (1.0f / activeGames) : 0.0f;
 		diving_score_weight = !_data.diving_game_over ? (1.0f / activeGames) : 0.0f;
 
-		// cerr << "active-games: " << activeGames << endl;
-		// cerr << _data.hurdle_game_over << ' ' << _data.archery_game_over << ' ' << _data.diving_game_over << endl; 
-		// cerr << hurdle_score_weight << " " << archery_score_weight << " " << diving_score_weight << endl;
+		cerr << "active-games: " << activeGames << endl;
+		cerr << "hw:" << hurdle_score_weight << " ";
+		cerr << "aw:" << archery_score_weight << " ";
+		cerr << "dw:" << diving_score_weight << endl;
 	}
 
 } scoring;

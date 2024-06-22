@@ -32,10 +32,6 @@ pair<float, bool> get_value_and_terminated(State &state)
 	}
 	else archery_score = 0.0f;
 
-	/*
-		diving notes:
-			- maxDiving convert it to maxNeeded.
-	*/
 	double diving_score;
 
 	if (!_data.diving_game_over && (_data.maxDivingScore - _data.minDivingScore) != 0)

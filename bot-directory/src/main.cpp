@@ -1,5 +1,7 @@
 #include "header.hpp"
 #include "state.hpp"
+#include <sstream>
+#include <iostream>
 string archery_getBestMove(string &gpu, int x, int y);
 void update_hurdle_data(string &gpu, vector<int> &regs);
 void update_archery_data(string &gpu, vector<int> &regs);
@@ -8,10 +10,6 @@ void update_diving_data(string &gpu, vector<int> &regs);
 
 void solve(State &state)
 {
-	/* evaluate weights */
-
-	/* take an action based on mcts or best-move */
-
 	string action;
 
 	if (scoring.archery_score_weight == 1.0f)
@@ -40,12 +38,20 @@ int main()
 
 	while (true)
 	{
+		stringstream tunrInput;
 		State state;
 		vector<string> scores(3);
 		for (int i = 0; i < 3; i++)
 		{
 			getline(cin, scores[i]);
 		}
+
+		#if PRINT_INPUT
+		tunrInput << "---start-turn-input---------" << endl;
+		for (int i = 0; i < 3; i++)
+			tunrInput << scores[i] << "\n";
+		#endif
+
 		for (int i = 0; i < 4; i++)
 		{
 			string gpu;
@@ -53,6 +59,13 @@ int main()
 			vector<int> regs(7);
 			for (int r=0;r<7;r++)cin>>regs[r];
 			cin.ignore();
+
+			#if PRINT_INPUT
+			tunrInput << gpu << endl;
+			for (int r=0;r<7; r++)
+				tunrInput << regs[r] << " \n"[r+1==7];
+			#endif
+
 			//
 			if (i == 0)
 			{
@@ -77,9 +90,21 @@ int main()
 				update_diving_data(gpu, regs);
 			}
 		}
-		reverse(rall(state.archery_gpu));
-		reverse(rall(state.diving_gpu));
-		scoring.evaluate();
+
+		#if PRINT_INPUT
+		tunrInput << "-----end-turn-input---------";
+		#endif
+
+		cerr << "Turn-round: " << turn << endl;
+
+		#if PRINT_INPUT
+		cerr << tunrInput.str() << endl;
+		#endif
+
+		reverse(rall(state.archery_gpu)); // reversing gpu for fast archery
+		reverse(rall(state.diving_gpu)); // reversing gpu for fast diving
+		scoring.evaluateAndSetWeights();
 		solve(state);
+		turn += 1;
 	}
 }
