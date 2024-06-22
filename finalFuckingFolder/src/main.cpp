@@ -1,7 +1,7 @@
 #include "header.hpp"
 #include "state.hpp"
 string archery_getBestMove(string &gpu, int x, int y);
-
+void update_hurdle_data(string &gpu, vector<int> &regs);
 /*start*/
 
 void solve(State &state)
@@ -35,16 +35,16 @@ int main()
 	while (true)
 	{
 		State state;
+		vector<string> scores(3);
 		for (int i = 0; i < 3; i++)
 		{
-			string score;
-			getline(cin, score);
+			getline(cin, scores[i]);
 		}
 		for (int i = 0; i < 4; i++)
 		{
 			string gpu;
 			cin >> gpu;
-			int regs[7];
+			vector<int> regs(7);
 			for (int r=0;r<7;r++)cin>>regs[r];
 			cin.ignore();
 			//
@@ -54,7 +54,7 @@ int main()
 				state.hurdle_pos = regs[player_idx];
 				state.hurdle_stunned = regs[player_idx+3];
 				state.hurdle_turn = 0;
-				precalcHurdleData(state.hurdle_gpu, state.hurdle_pos, state.hurdle_stunned);
+				update_hurdle_data(gpu, regs);
 			}
 			else if (i == 1)
 			{

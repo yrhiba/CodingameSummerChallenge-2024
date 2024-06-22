@@ -25,13 +25,28 @@ int player_idx, nb_games;
 
 struct State;
 
-struct Data
+struct Data // updated data calculated each turn
 {
-	int maxHurdleTurns;
-	int minHurdleTurns;
+	int maxHurdleTurns, minHurdleTurns; // my player
+	int hurdle_players_maxTurns[3]; // max turns needed for each player to reach the end
+	int hurdle_players_minTurns[3]; // min turns needed for each player to reach the end
+	bool hurdle_players_garantide_win[3];
+	int hurdle_players_ranking_position[3];
+	int hurdle_players_final_scores[3];
+	bool hurdle_game_over;
 
-	int maxDivingScore;
-	int minDivingScore;
+	bool archery_players_garantide_win[3];
+	int archery_players_ranking_position[3];
+	int archery_players_final_scores[3];
+	bool archery_game_over;
+
+	int maxDivingScore, minDivingScore; // my player
+	int diving_players_maxScores[3];
+	int diving_players_minScores[3];
+	bool diving_players_garantide_win[3];
+	int diving_players_ranking_position[3];
+	int diving_players_final_scores[3];
+	bool diving_game_over;
 
 } _data;
 
@@ -73,7 +88,10 @@ pair<float, bool> get_value_and_terminated(State &state);
 
 string search(int number_of_iterations, State &state);
 
-void precalcHurdleData(string &gpu, int pos, int stunned);
+/*
+	return (maxTurns, minTurns)
+*/
+pair<int, int> precalcHurdleData(string &gpu, int pos, int stunned);
 
 void precalcDivingData(string &gpu,  int point, int combo);
 /*game-utils*/
