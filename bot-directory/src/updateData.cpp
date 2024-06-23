@@ -126,6 +126,38 @@ void update_archery_data(string &gpu, vector<int> &regs)
 			regs[i*2], regs[i*2+1], 0);
 	}
 	//
+	int player_x = regs[player_idx*2];
+	int player_y = regs[player_idx*2+1];
+	int wind = (!gpu.empty() ? (gpu[0] - '0') : 0);
+	for (int d = 0; d < 4; d++) // loop for each next actions
+	{
+		int nx = player_x + (dc[d] * wind);
+		int ny = player_y + (dr[d] * wind);
+		_data.archery_actions_bestDis[d] =  archeryMaxDpRec(archeryMaxDp, gpu,
+			nx, ny, 1);
+	}
+	bool yesAllActionsHaveSameGoodDis = true;
+	int garantiedWind = 0;
+	for (int d = 0; d < 4; d++)
+	{
+		garantiedWind += (_data.archery_actions_bestDis[d]
+			<= min(_data.archery_players_bestDis[(player_idx+1)%3],
+				_data.archery_players_bestDis[(player_idx+2)%3])
+		);
+		//
+		if (abs(_data.archery_actions_bestDis[d] - _data.archery_actions_bestDis[0]) > 1e-4)
+		{
+			yesAllActionsHaveSameGoodDis = false;
+			break;
+		}
+	}
+	//
+	if (yesAllActionsHaveSameGoodDis || (garantiedWind >= 4))
+	{
+		_data.archery_game_over = true;
+		return ;
+	}
+	//
 	for (int i = 0; i < 3; i++)
 	{
 		_data.archery_players_garantide_win[i] = (

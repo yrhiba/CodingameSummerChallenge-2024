@@ -41,6 +41,7 @@ struct Data // updated data calculated each turn
 	bool hurdle_game_over;
 
 	float archery_players_bestDis[3];
+	float archery_actions_bestDis[4];
 	float archery_players_worstDis[3];
 	int archery_players_garantide_win[3];
 	int archery_playrs_garantie_lose[3];
@@ -89,6 +90,11 @@ struct Data // updated data calculated each turn
 		{
 			cerr << "p" << i << ": gw:" << archery_players_garantide_win[i] << ", gl:" << archery_playrs_garantie_lose[i] << endl;
 		}
+
+		for (int d = 0; d < 4; d++)
+		{
+			cerr << "d: " << directions[d] << " best: " << archery_actions_bestDis[d] << endl;
+		}
 	}
 
 	void printDivingData()
@@ -113,7 +119,7 @@ struct Data // updated data calculated each turn
 
 void debug()
 {
-	_data.printHurdleData();
+	// _data.printHurdleData();
 	// _data.printArcheryData();
 	// _data.printDivingData();
 }
