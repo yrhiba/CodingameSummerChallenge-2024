@@ -62,6 +62,8 @@ struct Data // updated data calculated each turn
 
 	void printHurdleData()
 	{
+		cerr << "game-over: " << hurdle_game_over << endl;
+
 		for (int i = 0; i < 3; i++)
 			cerr << "p" << i << ": maxH: " << hurdle_players_maxTurns[i] << ", minH: " << hurdle_players_minTurns[i] << endl;
 
@@ -111,7 +113,7 @@ struct Data // updated data calculated each turn
 
 void debug()
 {
-	// _data.printHurdleData();
+	_data.printHurdleData();
 	// _data.printArcheryData();
 	// _data.printDivingData();
 }

@@ -52,7 +52,8 @@ void update_hurdle_data(string &gpu, vector<int> &regs)
 	_data.hurdleGarantideWin = _data.hurdle_players_garantide_win[player_idx];
 
 	if (_data.hurdle_players_garantide_win[player_idx]
-		|| _data.hurdle_players_garantide_lose[player_idx])
+		|| _data.hurdle_players_garantide_lose[player_idx]
+		|| (turn + _data.hurdle_players_minTurns[player_idx]) > 100)
 	{
 		_data.hurdle_game_over = true;
 		return ;
