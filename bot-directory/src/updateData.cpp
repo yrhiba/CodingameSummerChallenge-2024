@@ -26,9 +26,9 @@ void update_hurdle_data(string &gpu, vector<int> &regs)
 	{
 		/* updating garantide win */
 		_data.hurdle_players_garantide_win[i] = (
-			_data.hurdle_players_minTurns[i] > _data.hurdle_players_maxTurns[(i+1)%3]
+			_data.hurdle_players_maxTurns[i] < _data.hurdle_players_minTurns[(i+1)%3]
 			&&
-			_data.hurdle_players_minTurns[i] > _data.hurdle_players_maxTurns[(i+2)%3]
+			_data.hurdle_players_maxTurns[i] < _data.hurdle_players_minTurns[(i+2)%3]
 		);
 
 		/* updating ranking positions */
@@ -45,11 +45,18 @@ void update_hurdle_data(string &gpu, vector<int> &regs)
 	_data.minHurdleTurns = _data.hurdle_players_minTurns[player_idx];
 	_data.hurdleGarantideWin = _data.hurdle_players_garantide_win[player_idx];
 
-	// if (_data.hurdleGarantideWin)
-	// {
-	// 	_data.hurdle_game_over = true;
-	// 	return ;
-	// }
+	if (_data.hurdleGarantideWin)
+	{
+		_data.hurdle_game_over = true;
+		return ;
+	}
+
+	if ((_data.hurdle_players_garantide_win[(player_idx+1)%3]
+		|| _data.hurdle_players_garantide_win[(player_idx+2)%3]) && (_data.hurdle_players_ranking_position[player_idx] == 2))
+	{
+		_data.hurdle_game_over = true;
+		return ;
+	}
 }
 
 float archeryMaxDpRec(

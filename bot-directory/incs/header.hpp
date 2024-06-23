@@ -16,6 +16,7 @@
 using namespace std;
 
 # define PRINT_INPUT 1
+# define TEST_ONE_TURN 0
 
 const string directions[8] {"D","R","U","L","DR","DL","TL","TR"};
 const int dr[8] {1, 0, -1, 0, 1, 1, -1, -1};

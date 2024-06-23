@@ -106,5 +106,9 @@ int main()
 		scoring.evaluateAndSetWeights();
 		solve(state);
 		turn += 1;
+
+		#if TEST_ONE_TURN
+		break;
+		#endif
 	}
 }
