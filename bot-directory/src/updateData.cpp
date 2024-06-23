@@ -102,7 +102,7 @@ float archeryMinDpRec(
 
 void update_archery_data(string &gpu, vector<int> &regs)
 {
-	if (gpu == "GAME_OVER")
+	if (gpu == "GAME_OVER" || (turn + gpu.size() > 100))
 	{
 		_data.archery_game_over = true;
 		return ;
@@ -183,7 +183,7 @@ void update_archery_data(string &gpu, vector<int> &regs)
 
 void update_diving_data(string &gpu, vector<int> &regs)
 {
-	if (gpu == "GAME_OVER")
+	if (gpu == "GAME_OVER" || (turn + gpu.size() > 100))
 	{
 		_data.diving_game_over = true;
 		return ;
