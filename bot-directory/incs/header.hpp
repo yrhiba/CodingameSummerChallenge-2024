@@ -36,6 +36,7 @@ struct Data // updated data calculated each turn
 	int hurdle_players_maxTurns[3]; // max turns needed for each player to reach the end
 	int hurdle_players_minTurns[3]; // min turns needed for each player to reach the end
 	int hurdle_players_garantide_win[3]; // 0: losing, 1: wining, -1: don't know
+	int hurdle_players_garantide_silver[3]; // 0: losing, 1: wining, -1: don't know
 	int hurdle_players_garantide_lose[3]; // 0: losing, 1: wining, -1: don't know
 	int hurdle_players_ranking_position[3]; // 0:gold, 1:silver, 2:bronze
 	bool hurdle_game_over;
@@ -44,6 +45,7 @@ struct Data // updated data calculated each turn
 	float archery_actions_bestDis[4];
 	float archery_players_worstDis[3];
 	int archery_players_garantide_win[3];
+	int archery_playrs_garantie_silver[3];
 	int archery_playrs_garantie_lose[3];
 	int archery_rest_turns;
 	bool archery_game_over;
@@ -52,6 +54,7 @@ struct Data // updated data calculated each turn
 	int diving_players_maxScores[3];
 	int diving_players_minScores[3];
 	bool diving_players_garantide_win[3];
+	bool diving_players_garantide_silver[3];
 	bool diving_players_garantide_lose[3];
 	int diving_players_ranking_position[3];
 	bool diving_game_over;
