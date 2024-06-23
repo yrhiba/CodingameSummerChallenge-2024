@@ -6,6 +6,7 @@ string archery_getBestMove(string &gpu, int x, int y);
 void update_hurdle_data(string &gpu, vector<int> &regs);
 void update_archery_data(string &gpu, vector<int> &regs);
 void update_diving_data(string &gpu, vector<int> &regs);
+void debug();
 /*start*/
 
 void solve(State &state)
@@ -99,6 +100,10 @@ int main()
 
 		#if PRINT_INPUT
 		cerr << tunrInput.str() << endl;
+		#endif
+
+		#if DEBUG
+		debug();
 		#endif
 
 		reverse(rall(state.archery_gpu)); // reversing gpu for fast archery

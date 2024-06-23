@@ -15,8 +15,9 @@
 #include <sstream>
 using namespace std;
 
-# define PRINT_INPUT 1
+# define PRINT_INPUT 0
 # define TEST_ONE_TURN 0
+# define DEBUG 0
 
 const string directions[8] {"D","R","U","L","DR","DL","TL","TR"};
 const int dr[8] {1, 0, -1, 0, 1, 1, -1, -1};
@@ -35,19 +36,22 @@ struct Data // updated data calculated each turn
 	int hurdle_players_maxTurns[3]; // max turns needed for each player to reach the end
 	int hurdle_players_minTurns[3]; // min turns needed for each player to reach the end
 	int hurdle_players_garantide_win[3]; // 0: losing, 1: wining, -1: don't know
+	int hurdle_players_garantide_lose[3]; // 0: losing, 1: wining, -1: don't know
 	int hurdle_players_ranking_position[3]; // 0:gold, 1:silver, 2:bronze
 	bool hurdle_game_over;
 
 	float archery_players_bestDis[3];
 	float archery_players_worstDis[3];
 	int archery_players_garantide_win[3];
+	int archery_playrs_garantie_lose[3];
 	int archery_rest_turns;
 	bool archery_game_over;
 
-	int maxDivingScore, minDivingScore, needScore; // my player
+	int maxDivingScore, minDivingScore, divingNeedScore; // my player
 	int diving_players_maxScores[3];
 	int diving_players_minScores[3];
 	bool diving_players_garantide_win[3];
+	bool diving_players_garantide_lose[3];
 	int diving_players_ranking_position[3];
 	bool diving_game_over;
 
@@ -56,7 +60,61 @@ struct Data // updated data calculated each turn
 	int archery_players_final_scores[3];
 	int diving_players_final_scores[3];
 
+	void printHurdleData()
+	{
+		for (int i = 0; i < 3; i++)
+			cerr << "p" << i << ": maxH: " << hurdle_players_maxTurns[i] << ", minH: " << hurdle_players_minTurns[i] << endl;
+
+		for (int i = 0; i < 3; i++)
+			cerr << "p" << i << ": garantieWin:" << hurdle_players_garantide_win[i] << ", ";
+		cerr << endl;
+
+		for (int i = 0; i < 3; i++)
+			cerr << "p" << i << ": rank: " << hurdle_players_ranking_position[i] << ", ";
+		cerr << endl;
+	}
+
+	void printArcheryData()
+	{
+		cerr << "rest-turns: " << archery_rest_turns << ", game-over: " << archery_game_over << endl;
+
+		for (int i = 0; i < 3; i++)
+		{
+			cerr << "p" << i << ": bestDis:" << archery_players_bestDis[i] << ", worstDis:" << archery_players_worstDis[i] << endl;
+		}
+
+		for (int i = 0; i < 3; i++)
+		{
+			cerr << "p" << i << ": gw:" << archery_players_garantide_win[i] << ", gl:" << archery_playrs_garantie_lose[i] << endl;
+		}
+	}
+
+	void printDivingData()
+	{
+		cerr << "game-over: " << diving_game_over << ", need-score: " << divingNeedScore << endl;
+		for (int i = 0; i < 3; i++)
+		{
+			cerr << "minS: " << diving_players_minScores[i] << ", maxS: " << diving_players_maxScores[i] << endl;
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			cerr << "gw: " << diving_players_garantide_win[i] << ", gl: " << diving_players_garantide_lose[i] << endl;
+		}
+		for (int i = 0; i < 3; i++)
+		{
+			cerr << "pr" << i << ": " << diving_players_ranking_position[i] << ", ";
+		}
+		cerr << endl;
+	}
+
 } _data;
+
+void debug()
+{
+	// _data.printHurdleData();
+	// _data.printArcheryData();
+	// _data.printDivingData();
+}
 
 struct Scoring
 {

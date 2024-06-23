@@ -26,9 +26,15 @@ void update_hurdle_data(string &gpu, vector<int> &regs)
 	{
 		/* updating garantide win */
 		_data.hurdle_players_garantide_win[i] = (
-			_data.hurdle_players_maxTurns[i] < _data.hurdle_players_minTurns[(i+1)%3]
+			_data.hurdle_players_maxTurns[i] <= _data.hurdle_players_minTurns[(i+1)%3]
 			&&
-			_data.hurdle_players_maxTurns[i] < _data.hurdle_players_minTurns[(i+2)%3]
+			_data.hurdle_players_maxTurns[i] <= _data.hurdle_players_minTurns[(i+2)%3]
+		);
+
+		_data.hurdle_players_garantide_lose[i] = (
+			_data.hurdle_players_minTurns[i] > _data.hurdle_players_maxTurns[(i+1)%3]
+			&&
+			_data.hurdle_players_minTurns[i] > _data.hurdle_players_maxTurns[(i+2)%3]
 		);
 
 		/* updating ranking positions */
@@ -45,14 +51,8 @@ void update_hurdle_data(string &gpu, vector<int> &regs)
 	_data.minHurdleTurns = _data.hurdle_players_minTurns[player_idx];
 	_data.hurdleGarantideWin = _data.hurdle_players_garantide_win[player_idx];
 
-	if (_data.hurdleGarantideWin)
-	{
-		_data.hurdle_game_over = true;
-		return ;
-	}
-
-	if ((_data.hurdle_players_garantide_win[(player_idx+1)%3]
-		|| _data.hurdle_players_garantide_win[(player_idx+2)%3]) && (_data.hurdle_players_ranking_position[player_idx] == 2))
+	if (_data.hurdle_players_garantide_win[player_idx]
+		|| _data.hurdle_players_garantide_lose[player_idx])
 	{
 		_data.hurdle_game_over = true;
 		return ;
@@ -128,17 +128,24 @@ void update_archery_data(string &gpu, vector<int> &regs)
 	for (int i = 0; i < 3; i++)
 	{
 		_data.archery_players_garantide_win[i] = (
-			_data.archery_players_worstDis[i] > _data.archery_players_bestDis[(i+1)%3]
+			_data.archery_players_worstDis[i] <= _data.archery_players_bestDis[(i+1)%3]
 			&&
-			_data.archery_players_worstDis[i] > _data.archery_players_bestDis[(i+2)%3]
+			_data.archery_players_worstDis[i] <= _data.archery_players_bestDis[(i+2)%3]
+		);
+
+		_data.archery_playrs_garantie_lose[i] = (
+			_data.archery_players_bestDis[i] > _data.archery_players_worstDis[(i+1)%3]
+			&&
+			_data.archery_players_bestDis[i] > _data.archery_players_worstDis[(i+2)%3]
 		);
 	}
 
-	// if (_data.archery_players_garantide_win[player_idx])
-	// {
-	// 	_data.archery_game_over = true;
-	// 	return ;
-	// }
+	if (_data.archery_players_garantide_win[player_idx]
+		|| _data.archery_playrs_garantie_lose[player_idx])
+	{
+		_data.archery_game_over = true;
+		return ;
+	}
 }
 
 void update_diving_data(string &gpu, vector<int> &regs)
@@ -168,19 +175,36 @@ void update_diving_data(string &gpu, vector<int> &regs)
 			&&
 			_data.diving_players_minScores[i] > _data.diving_players_maxScores[(i+2)%3]
 		);
+
+		_data.diving_players_garantide_lose[i] = (
+			_data.diving_players_maxScores[i] < _data.diving_players_minScores[(i+1)%3]
+			&&
+			_data.diving_players_maxScores[i] < _data.diving_players_minScores[(i+2)%3]
+		);
+
+		if (_data.diving_players_minScores[i] >= _data.diving_players_minScores[(i+1)%3]
+			&& _data.diving_players_minScores[i] >= _data.diving_players_minScores[(i+2)%3])
+		{
+			_data.diving_players_ranking_position[i] = 0;
+		}
+		else if (_data.diving_players_minScores[i] >= _data.diving_players_minScores[(i+1)%3]
+			|| _data.diving_players_minScores[i] >= _data.diving_players_minScores[(i+2)%3])
+		{
+			_data.diving_players_ranking_position[i] = 1;
+		}
+		else
+			_data.diving_players_ranking_position[i] = 2;
 	}
 
-	_data.needScore = max(_data.diving_players_maxScores[(player_idx+1)%3],
-		_data.diving_players_maxScores[(player_idx+2)%3]);
+	_data.divingNeedScore = max(_data.diving_players_maxScores[(player_idx+1)%3],
+		_data.diving_players_maxScores[(player_idx+2)%3]) - _data.diving_players_minScores[player_idx];
 
-	// if (_data.diving_players_minScores[player_idx] > _data.needScore)
-	// {
-	// 	_data.diving_game_over = true;
-	// 	return ;
-	// }
-	// if (_data.diving_players_maxScores[player_idx] < _data.needScore)
-	// {
-	// 	_data.diving_game_over = true;
-	// 	return ;
-	// }
+	_data.divingNeedScore = max(0, _data.divingNeedScore);
+
+	if (_data.diving_players_garantide_win[player_idx]
+		|| _data.diving_players_garantide_lose[player_idx])
+	{
+		_data.diving_game_over = true;
+		return ;
+	}
 }
