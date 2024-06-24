@@ -39,6 +39,8 @@ struct Data // updated data calculated each turn
 	int hurdle_players_garantide_lose[3]; // 0: losing, 1: wining, -1: don't know
 	int hurdle_players_ranking_position[3]; // 0:gold, 1:silver, 2:bronze
 	bool hurdle_game_over;
+	int hurdle_lower_turns_needed; // minimu turn for at least possible win
+	int hurdle_upper_tuns_needed; // maximum turn for at least possible win
 
 	float archery_players_bestDis[3];
 	float archery_players_worstDis[3];
@@ -46,6 +48,8 @@ struct Data // updated data calculated each turn
 	int archery_playrs_garantie_lose[3];
 	int archery_rest_turns;
 	bool archery_game_over;
+	int archery_lower_distance_needed; // lower distance for possible win
+	int archery_upper_distance_needed; // upper distance for possible win
 
 	int maxDivingScore, minDivingScore, divingNeedScore; // my player
 	int diving_players_maxScores[3];
@@ -54,6 +58,8 @@ struct Data // updated data calculated each turn
 	bool diving_players_garantide_lose[3];
 	int diving_players_ranking_position[3];
 	bool diving_game_over;
+	int diving_lowest_score; // lowest possible sccore to win
+	int diving_upper_score; // upper possible score to win
 
 	/* todo seperatly */
 	int hurdle_players_final_scores[3];
@@ -109,15 +115,14 @@ struct Data // updated data calculated each turn
 
 } _data;
 
-void debug()
-{
-	// _data.printHurdleData();
-	// _data.printArcheryData();
-	// _data.printDivingData();
-}
 
 struct Scoring
 {
+	// current gained score from each mini game
+	int hurdle_final_score;
+	int archery_final_score;
+	int diving_final_score;
+
 	float hurdle_score_weight;
 	float archery_score_weight;
 	float diving_score_weight;
@@ -132,15 +137,32 @@ struct Scoring
 
 	void evaluateAndSetWeights()
 	{
+		/* count the active games */
 		float activeGames = (
 			!_data.hurdle_game_over + 
 			!_data.archery_game_over +
 			!_data.diving_game_over
 		);
 
-		hurdle_score_weight = !_data.hurdle_game_over ? (1.0f / activeGames) : 0.0f;
-		archery_score_weight = !_data.archery_game_over ? (1.0f / activeGames) : 0.0f;
-		diving_score_weight = !_data.diving_game_over ? (1.0f / activeGames) : 0.0f;
+		/* weights the games based on their score */
+		int totalScoresSum = (_data.hurdle_game_over ? 0 : hurdle_final_score)
+				+ (_data.archery_game_over ? 0 : archery_final_score)
+				+ (_data.diving_game_over ? 0 : diving_final_score);
+		int hfinalScore = _data.hurdle_game_over ? 0 : totalScoresSum - hurdle_final_score;
+		int afinalScroe = _data.archery_game_over ? 0 : totalScoresSum - archery_final_score;
+		int dfinalScore = _data.diving_game_over ? 0 : totalScoresSum - diving_final_score;
+		int totalhad = hfinalScore + afinalScroe + dfinalScore;
+		hurdle_score_weight = ((hfinalScore * 1.0f) / (totalhad * 1.0f));
+		archery_score_weight = ((afinalScroe * 1.0f) / (totalhad * 1.0f));
+		diving_score_weight = ((dfinalScore * 1.0f) / (totalhad * 1.0f));
+
+		/* weights each game equilbry */
+		if (totalScoresSum == 0 || activeGames == 1)
+		{
+			hurdle_score_weight = !_data.hurdle_game_over ? (1.0f / activeGames) : 0.0f;
+			archery_score_weight = !_data.archery_game_over ? (1.0f / activeGames) : 0.0f;
+			diving_score_weight = !_data.diving_game_over ? (1.0f / activeGames) : 0.0f;
+		}
 
 		cerr << "active-games: " << activeGames << endl;
 		cerr << "hw:" << hurdle_score_weight << " ";
@@ -148,7 +170,31 @@ struct Scoring
 		cerr << "dw:" << diving_score_weight << endl;
 	}
 
+	void calculateGamesFinalScores(string &myScore)
+	{
+		stringstream S(myScore);
+		int finalScore; S >> finalScore;
+		for (int g = 0; g < 4; g++)
+		{
+			int gold, silver, bronze;
+			S >> gold >> silver >> bronze;
+			if (g == 0) hurdle_final_score = gold * 3 + silver;
+			else if (g == 1) archery_final_score = gold * 3 + silver;
+			else if (g == 3) diving_final_score = gold * 3 + silver;
+		}
+	}
+
 } scoring;
+
+void debug()
+{
+	// cerr << "hurdle-final-score: " << scoring.hurdle_final_score << endl;
+	// cerr << "archery-final-score: " << scoring.archery_final_score << endl;
+	// cerr << "diving-final-score: " << scoring.diving_final_score << endl;
+	// _data.printHurdleData();
+	// _data.printArcheryData();
+	// _data.printDivingData();
+}
 
 /*end*/
 
