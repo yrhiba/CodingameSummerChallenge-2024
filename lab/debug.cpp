@@ -38,13 +38,16 @@ struct Data // updated data calculated each turn
 	int hurdle_players_maxTurns[3]; // max turns needed for each player to reach the end
 	int hurdle_players_minTurns[3]; // min turns needed for each player to reach the end
 	int hurdle_players_garantide_win[3]; // 0: losing, 1: wining, -1: don't know
+	int hurdle_players_garantide_silver[3]; // 0: losing, 1: wining, -1: don't know
 	int hurdle_players_garantide_lose[3]; // 0: losing, 1: wining, -1: don't know
 	int hurdle_players_ranking_position[3]; // 0:gold, 1:silver, 2:bronze
 	bool hurdle_game_over;
 
 	float archery_players_bestDis[3];
+	float archery_actions_bestDis[4];
 	float archery_players_worstDis[3];
 	int archery_players_garantide_win[3];
+	int archery_playrs_garantie_silver[3];
 	int archery_playrs_garantie_lose[3];
 	int archery_rest_turns;
 	bool archery_game_over;
@@ -53,6 +56,7 @@ struct Data // updated data calculated each turn
 	int diving_players_maxScores[3];
 	int diving_players_minScores[3];
 	bool diving_players_garantide_win[3];
+	bool diving_players_garantide_silver[3];
 	bool diving_players_garantide_lose[3];
 	int diving_players_ranking_position[3];
 	bool diving_game_over;
@@ -64,6 +68,8 @@ struct Data // updated data calculated each turn
 
 	void printHurdleData()
 	{
+		cerr << "game-over: " << hurdle_game_over << endl;
+
 		for (int i = 0; i < 3; i++)
 			cerr << "p" << i << ": maxH: " << hurdle_players_maxTurns[i] << ", minH: " << hurdle_players_minTurns[i] << endl;
 
@@ -88,6 +94,11 @@ struct Data // updated data calculated each turn
 		for (int i = 0; i < 3; i++)
 		{
 			cerr << "p" << i << ": gw:" << archery_players_garantide_win[i] << ", gl:" << archery_playrs_garantie_lose[i] << endl;
+		}
+
+		for (int d = 0; d < 4; d++)
+		{
+			cerr << "d: " << directions[d] << " best: " << archery_actions_bestDis[d] << endl;
 		}
 	}
 
@@ -425,6 +436,16 @@ void update_hurdle_data(string &gpu, vector<int> &regs)
 			_data.hurdle_players_minTurns[i] > _data.hurdle_players_maxTurns[(i+2)%3]
 		);
 
+		_data.hurdle_players_garantide_silver[i] = ((
+			_data.hurdle_players_minTurns[i] > _data.hurdle_players_maxTurns[(i+1)%3]
+			&&
+			_data.hurdle_players_maxTurns[i] <= _data.hurdle_players_minTurns[(i+2)%3]
+		) || (
+			_data.hurdle_players_minTurns[i] > _data.hurdle_players_maxTurns[(i+2)%3]
+			&&
+			_data.hurdle_players_maxTurns[i] <= _data.hurdle_players_minTurns[(i+1)%3]
+		));
+
 		/* updating ranking positions */
 		if (regs[i] >= regs[(i+1)%3] && regs[i] >= regs[(i+2)%3])
 			_data.hurdle_players_ranking_position[i] = 0;
@@ -440,7 +461,9 @@ void update_hurdle_data(string &gpu, vector<int> &regs)
 	_data.hurdleGarantideWin = _data.hurdle_players_garantide_win[player_idx];
 
 	if (_data.hurdle_players_garantide_win[player_idx]
-		|| _data.hurdle_players_garantide_lose[player_idx])
+		|| _data.hurdle_players_garantide_lose[player_idx]
+		|| _data.hurdle_players_garantide_silver[player_idx]
+		|| (turn + _data.hurdle_players_minTurns[player_idx]) > 100)
 	{
 		_data.hurdle_game_over = true;
 		return ;
@@ -489,7 +512,7 @@ float archeryMinDpRec(
 
 void update_archery_data(string &gpu, vector<int> &regs)
 {
-	if (gpu == "GAME_OVER")
+	if (gpu == "GAME_OVER" || (turn + gpu.size() > 100))
 	{
 		_data.archery_game_over = true;
 		return ;
@@ -513,6 +536,38 @@ void update_archery_data(string &gpu, vector<int> &regs)
 			regs[i*2], regs[i*2+1], 0);
 	}
 	//
+	int player_x = regs[player_idx*2];
+	int player_y = regs[player_idx*2+1];
+	int wind = (!gpu.empty() ? (gpu[0] - '0') : 0);
+	for (int d = 0; d < 4; d++) // loop for each next actions
+	{
+		int nx = player_x + (dc[d] * wind);
+		int ny = player_y + (dr[d] * wind);
+		_data.archery_actions_bestDis[d] =  archeryMaxDpRec(archeryMaxDp, gpu,
+			nx, ny, 1);
+	}
+	bool yesAllActionsHaveSameGoodDis = true;
+	int garantiedWind = 0;
+	for (int d = 0; d < 4; d++)
+	{
+		garantiedWind += (_data.archery_actions_bestDis[d]
+			<= min(_data.archery_players_bestDis[(player_idx+1)%3],
+				_data.archery_players_bestDis[(player_idx+2)%3])
+		);
+		//
+		if (abs(_data.archery_actions_bestDis[d] - _data.archery_actions_bestDis[0]) > 1e-4)
+		{
+			yesAllActionsHaveSameGoodDis = false;
+			break;
+		}
+	}
+	//
+	if (yesAllActionsHaveSameGoodDis || (garantiedWind >= 4))
+	{
+		_data.archery_game_over = true;
+		return ;
+	}
+	//
 	for (int i = 0; i < 3; i++)
 	{
 		_data.archery_players_garantide_win[i] = (
@@ -526,9 +581,20 @@ void update_archery_data(string &gpu, vector<int> &regs)
 			&&
 			_data.archery_players_bestDis[i] > _data.archery_players_worstDis[(i+2)%3]
 		);
+
+		_data.archery_playrs_garantie_silver[i] = ((
+			_data.archery_players_bestDis[i] > _data.archery_players_worstDis[(i+1)%3]
+			&&
+			_data.archery_players_worstDis[i] <= _data.archery_players_bestDis[(i+2)%3]
+		) || (
+			_data.archery_players_bestDis[i] > _data.archery_players_worstDis[(i+2)%3]
+			&&
+			_data.archery_players_worstDis[i] <= _data.archery_players_bestDis[(i+1)%3]
+		));
 	}
 
 	if (_data.archery_players_garantide_win[player_idx]
+		|| _data.archery_playrs_garantie_silver[player_idx]
 		|| _data.archery_playrs_garantie_lose[player_idx])
 	{
 		_data.archery_game_over = true;
@@ -538,7 +604,7 @@ void update_archery_data(string &gpu, vector<int> &regs)
 
 void update_diving_data(string &gpu, vector<int> &regs)
 {
-	if (gpu == "GAME_OVER")
+	if (gpu == "GAME_OVER" || (turn + gpu.size() > 100))
 	{
 		_data.diving_game_over = true;
 		return ;
@@ -570,6 +636,16 @@ void update_diving_data(string &gpu, vector<int> &regs)
 			_data.diving_players_maxScores[i] < _data.diving_players_minScores[(i+2)%3]
 		);
 
+		_data.diving_players_garantide_silver[i] = ((
+			_data.diving_players_maxScores[i] < _data.diving_players_minScores[(i+1)%3]
+			&&
+			_data.diving_players_minScores[i] >= _data.diving_players_maxScores[(i+2)%3]
+		) || (
+			_data.diving_players_maxScores[i] < _data.diving_players_minScores[(i+2)%3]
+			&&
+			_data.diving_players_minScores[i] >= _data.diving_players_maxScores[(i+1)%3]
+		));
+
 		if (_data.diving_players_minScores[i] >= _data.diving_players_minScores[(i+1)%3]
 			&& _data.diving_players_minScores[i] >= _data.diving_players_minScores[(i+2)%3])
 		{
@@ -590,6 +666,7 @@ void update_diving_data(string &gpu, vector<int> &regs)
 	_data.divingNeedScore = max(0, _data.divingNeedScore);
 
 	if (_data.diving_players_garantide_win[player_idx]
+		|| _data.diving_players_garantide_silver[player_idx]
 		|| _data.diving_players_garantide_lose[player_idx])
 	{
 		_data.diving_game_over = true;
