@@ -47,6 +47,9 @@ int main()
 			getline(cin, scores[i]);
 		}
 
+		// calculating final scoring for each mini game
+		scoring.calculateGamesFinalScores(scores[player_idx]);
+
 		#if PRINT_INPUT
 		tunrInput << "---start-turn-input---------" << endl;
 		for (int i = 0; i < 3; i++)

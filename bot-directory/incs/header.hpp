@@ -41,6 +41,7 @@ struct Data // updated data calculated each turn
 	bool hurdle_game_over;
 	int hurdle_lower_turns_needed; // minimu turn for at least possible win
 	int hurdle_upper_tuns_needed; // maximum turn for at least possible win
+	int hurdle_pos;
 
 	float archery_players_bestDis[3];
 	float archery_players_worstDis[3];

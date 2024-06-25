@@ -47,9 +47,25 @@ void update_hurdle_data(string &gpu, vector<int> &regs)
 	}
 
 	// for fast access
+	_data.hurdle_pos = regs[player_idx];
 	_data.maxHurdleTurns = _data.hurdle_players_maxTurns[player_idx];
 	_data.minHurdleTurns = _data.hurdle_players_minTurns[player_idx];
 	_data.hurdleGarantideWin = _data.hurdle_players_garantide_win[player_idx];
+
+
+	// calculating left and right
+
+	_data.hurdle_lower_turns_needed = max(
+		min(_data.hurdle_players_minTurns[(player_idx+1)%3],
+			_data.hurdle_players_minTurns[(player_idx+2)%3]),
+		_data.hurdle_players_minTurns[player_idx]
+	);
+
+	_data.hurdle_upper_tuns_needed = min(
+			max(_data.hurdle_players_maxTurns[(player_idx+1)%3],
+			_data.hurdle_players_maxTurns[(player_idx+2)%3])
+		, _data.hurdle_players_maxTurns[player_idx]
+	);
 
 	if (_data.hurdle_players_garantide_win[player_idx]
 		|| _data.hurdle_players_garantide_lose[player_idx])
@@ -101,7 +117,7 @@ float archeryMinDpRec(
 
 void update_archery_data(string &gpu, vector<int> &regs)
 {
-	if (gpu == "GAME_OVER")
+	if (gpu == "GAME_OVER" || gpu.size() >= 10)
 	{
 		_data.archery_game_over = true;
 		return ;
@@ -139,6 +155,19 @@ void update_archery_data(string &gpu, vector<int> &regs)
 			_data.archery_players_bestDis[i] > _data.archery_players_worstDis[(i+2)%3]
 		);
 	}
+
+	_data.archery_upper_distance_needed = min
+	(
+		max(_data.archery_players_worstDis[(player_idx+1)%3],
+			_data.archery_players_worstDis[(player_idx+2)%3])
+		, _data.archery_players_worstDis[player_idx]
+	);
+
+	_data.archery_lower_distance_needed = max(
+		min(_data.archery_players_bestDis[(player_idx+1)%3],
+			_data.archery_players_bestDis[(player_idx+2)%3]),
+		_data.archery_players_bestDis[player_idx]
+	);
 
 	if (_data.archery_players_garantide_win[player_idx]
 		|| _data.archery_playrs_garantie_lose[player_idx])
@@ -200,6 +229,16 @@ void update_diving_data(string &gpu, vector<int> &regs)
 		_data.diving_players_maxScores[(player_idx+2)%3]) - _data.diving_players_minScores[player_idx];
 
 	_data.divingNeedScore = max(0, _data.divingNeedScore);
+
+	_data.diving_lowest_score = max(
+		min(_data.diving_players_minScores[(player_idx+1)%3], _data.diving_players_minScores[(player_idx+2)%3])
+		, _data.diving_players_minScores[player_idx]
+	);
+
+	_data.diving_upper_score = min(
+			max(_data.diving_players_maxScores[(player_idx+1)%3], _data.diving_players_maxScores[(player_idx+2)%3]),
+			_data.diving_players_maxScores[player_idx]
+	);
 
 	if (_data.diving_players_garantide_win[player_idx]
 		|| _data.diving_players_garantide_lose[player_idx])

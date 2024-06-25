@@ -41,6 +41,9 @@ struct Data // updated data calculated each turn
 	int hurdle_players_garantide_lose[3]; // 0: losing, 1: wining, -1: don't know
 	int hurdle_players_ranking_position[3]; // 0:gold, 1:silver, 2:bronze
 	bool hurdle_game_over;
+	int hurdle_lower_turns_needed; // minimu turn for at least possible win
+	int hurdle_upper_tuns_needed; // maximum turn for at least possible win
+	int hurdle_pos;
 
 	float archery_players_bestDis[3];
 	float archery_players_worstDis[3];
@@ -48,6 +51,8 @@ struct Data // updated data calculated each turn
 	int archery_playrs_garantie_lose[3];
 	int archery_rest_turns;
 	bool archery_game_over;
+	int archery_lower_distance_needed; // lower distance for possible win
+	int archery_upper_distance_needed; // upper distance for possible win
 
 	int maxDivingScore, minDivingScore, divingNeedScore; // my player
 	int diving_players_maxScores[3];
@@ -56,6 +61,8 @@ struct Data // updated data calculated each turn
 	bool diving_players_garantide_lose[3];
 	int diving_players_ranking_position[3];
 	bool diving_game_over;
+	int diving_lowest_score; // lowest possible sccore to win
+	int diving_upper_score; // upper possible score to win
 
 	/* todo seperatly */
 	int hurdle_players_final_scores[3];
@@ -111,15 +118,14 @@ struct Data // updated data calculated each turn
 
 } _data;
 
-void debug()
-{
-	// _data.printHurdleData();
-	// _data.printArcheryData();
-	// _data.printDivingData();
-}
 
 struct Scoring
 {
+	// current gained score from each mini game
+	int hurdle_final_score;
+	int archery_final_score;
+	int diving_final_score;
+
 	float hurdle_score_weight;
 	float archery_score_weight;
 	float diving_score_weight;
@@ -132,17 +138,34 @@ struct Scoring
 		return hurdle_scroe + archery_score + diving_score;
 	}
 
-	void evaluateAndSetWeights()
+	void oldEval()
 	{
+		/* count the active games */
 		float activeGames = (
 			!_data.hurdle_game_over + 
 			!_data.archery_game_over +
 			!_data.diving_game_over
 		);
 
-		hurdle_score_weight = !_data.hurdle_game_over ? (1.0f / activeGames) : 0.0f;
-		archery_score_weight = !_data.archery_game_over ? (1.0f / activeGames) : 0.0f;
-		diving_score_weight = !_data.diving_game_over ? (1.0f / activeGames) : 0.0f;
+		/* weights the games based on their score */
+		int totalScoresSum = (_data.hurdle_game_over ? 0 : hurdle_final_score)
+				+ (_data.archery_game_over ? 0 : archery_final_score)
+				+ (_data.diving_game_over ? 0 : diving_final_score);
+		int hfinalScore = _data.hurdle_game_over ? 0 : totalScoresSum - hurdle_final_score;
+		int afinalScroe = _data.archery_game_over ? 0 : totalScoresSum - archery_final_score;
+		int dfinalScore = _data.diving_game_over ? 0 : totalScoresSum - diving_final_score;
+		int totalhad = hfinalScore + afinalScroe + dfinalScore;
+		hurdle_score_weight = ((hfinalScore * 1.0f) / (totalhad * 1.0f));
+		archery_score_weight = ((afinalScroe * 1.0f) / (totalhad * 1.0f));
+		diving_score_weight = ((dfinalScore * 1.0f) / (totalhad * 1.0f));
+
+		/* weights each game equilbry */
+		if (totalScoresSum == 0 || activeGames == 1)
+		{
+			hurdle_score_weight = !_data.hurdle_game_over ? (1.0f / activeGames) : 0.0f;
+			archery_score_weight = !_data.archery_game_over ? (1.0f / activeGames) : 0.0f;
+			diving_score_weight = !_data.diving_game_over ? (1.0f / activeGames) : 0.0f;
+		}
 
 		cerr << "active-games: " << activeGames << endl;
 		cerr << "hw:" << hurdle_score_weight << " ";
@@ -150,7 +173,85 @@ struct Scoring
 		cerr << "dw:" << diving_score_weight << endl;
 	}
 
+	void calculateGamesFinalScores(string &myScore)
+	{
+		stringstream S(myScore);
+		int finalScore; S >> finalScore;
+		for (int g = 0; g < 4; g++)
+		{
+			int gold, silver, bronze;
+			S >> gold >> silver >> bronze;
+			if (g == 0) hurdle_final_score = gold * 3 + silver;
+			else if (g == 1) archery_final_score = gold * 3 + silver;
+			else if (g == 3) diving_final_score = gold * 3 + silver;
+		}
+	}
+
+	void evaluateAndSetWeights()
+	{
+			vector<pair<double, char>> order;
+			float sum = 0;
+
+			if (!_data.archery_game_over)
+			{
+				double medals = min((double)(archery_final_score) / 12.0f, (double)1.0f);
+				double toend = _data.archery_rest_turns / 16.0f;
+				order.push_back({toend * 0.3f + medals * 0.7f , 'E'});
+				sum += 1.0f - order.back().first;
+			}
+
+			if(!_data.hurdle_game_over)
+			{
+				double pos = _data.hurdle_players_ranking_position[player_idx] / 3.0f;
+				double toend = 1.0f - _data.hurdle_pos / 31.0f;
+				double medals = min((double)(hurdle_final_score) / 12.0f, (double)1.0f);
+
+				order.push_back({pos * 0.3f + toend * 0.4f + medals * 0.3f, 'H'});
+				sum += 1.0 - order.back().first;
+			}
+
+			if (!_data.diving_game_over)
+			{
+				double pos = _data.diving_players_ranking_position[player_idx] / 3.0f;
+				double medals = min((double)(diving_final_score) / 12.0f, (double)1.0f);
+				order.push_back({pos * 0.4f + medals * 0.6f, 'D'});
+				sum += 1.0 - order.back().first;
+			}
+
+			sort(order.begin(), order.end());
+
+			if (sum){
+				for(auto &[l, r] : order)
+				{
+					float w = (1 - l) / sum;
+
+					if (r == 'H')
+					{
+						hurdle_score_weight = w;
+					}
+					else if (r == 'E')
+					{
+						archery_score_weight = w;
+					}
+					else if (r == 'D')
+					{
+						diving_score_weight = w;
+					}
+				}
+			}
+	}
+
 } scoring;
+
+void debug()
+{
+	// cerr << "hurdle-final-score: " << scoring.hurdle_final_score << endl;
+	// cerr << "archery-final-score: " << scoring.archery_final_score << endl;
+	// cerr << "diving-final-score: " << scoring.diving_final_score << endl;
+	// _data.printHurdleData();
+	// _data.printArcheryData();
+	// _data.printDivingData();
+}
 
 // ########################
 // file-Name: incs/state.hpp
@@ -435,9 +536,25 @@ void update_hurdle_data(string &gpu, vector<int> &regs)
 	}
 
 	// for fast access
+	_data.hurdle_pos = regs[player_idx];
 	_data.maxHurdleTurns = _data.hurdle_players_maxTurns[player_idx];
 	_data.minHurdleTurns = _data.hurdle_players_minTurns[player_idx];
 	_data.hurdleGarantideWin = _data.hurdle_players_garantide_win[player_idx];
+
+
+	// calculating left and right
+
+	_data.hurdle_lower_turns_needed = max(
+		min(_data.hurdle_players_minTurns[(player_idx+1)%3],
+			_data.hurdle_players_minTurns[(player_idx+2)%3]),
+		_data.hurdle_players_minTurns[player_idx]
+	);
+
+	_data.hurdle_upper_tuns_needed = min(
+			max(_data.hurdle_players_maxTurns[(player_idx+1)%3],
+			_data.hurdle_players_maxTurns[(player_idx+2)%3])
+		, _data.hurdle_players_maxTurns[player_idx]
+	);
 
 	if (_data.hurdle_players_garantide_win[player_idx]
 		|| _data.hurdle_players_garantide_lose[player_idx])
@@ -489,7 +606,7 @@ float archeryMinDpRec(
 
 void update_archery_data(string &gpu, vector<int> &regs)
 {
-	if (gpu == "GAME_OVER")
+	if (gpu == "GAME_OVER" || gpu.size() >= 10)
 	{
 		_data.archery_game_over = true;
 		return ;
@@ -527,6 +644,19 @@ void update_archery_data(string &gpu, vector<int> &regs)
 			_data.archery_players_bestDis[i] > _data.archery_players_worstDis[(i+2)%3]
 		);
 	}
+
+	_data.archery_upper_distance_needed = min
+	(
+		max(_data.archery_players_worstDis[(player_idx+1)%3],
+			_data.archery_players_worstDis[(player_idx+2)%3])
+		, _data.archery_players_worstDis[player_idx]
+	);
+
+	_data.archery_lower_distance_needed = max(
+		min(_data.archery_players_bestDis[(player_idx+1)%3],
+			_data.archery_players_bestDis[(player_idx+2)%3]),
+		_data.archery_players_bestDis[player_idx]
+	);
 
 	if (_data.archery_players_garantide_win[player_idx]
 		|| _data.archery_playrs_garantie_lose[player_idx])
@@ -589,6 +719,16 @@ void update_diving_data(string &gpu, vector<int> &regs)
 
 	_data.divingNeedScore = max(0, _data.divingNeedScore);
 
+	_data.diving_lowest_score = max(
+		min(_data.diving_players_minScores[(player_idx+1)%3], _data.diving_players_minScores[(player_idx+2)%3])
+		, _data.diving_players_minScores[player_idx]
+	);
+
+	_data.diving_upper_score = min(
+			max(_data.diving_players_maxScores[(player_idx+1)%3], _data.diving_players_maxScores[(player_idx+2)%3]),
+			_data.diving_players_maxScores[player_idx]
+	);
+
 	if (_data.diving_players_garantide_win[player_idx]
 		|| _data.diving_players_garantide_lose[player_idx])
 	{
@@ -610,31 +750,44 @@ pair<float, bool> get_value_and_terminated(State &state)
 	//
 	double hurlde_score;
 
-	if (!_data.hurdle_game_over && (_data.maxHurdleTurns - _data.minHurdleTurns) != 0)
+	if (!_data.hurdle_game_over && (_data.hurdle_upper_tuns_needed - _data.hurdle_lower_turns_needed) != 0)
 	{
-		hurlde_score = ((_data.maxHurdleTurns - state.hurdle_turn) * 1.0f)
-				/ ((_data.maxHurdleTurns - _data.minHurdleTurns) * 1.0f);
+		hurlde_score = ((_data.hurdle_upper_tuns_needed - state.hurdle_turn) * 1.0f)
+				/ ((_data.hurdle_upper_tuns_needed - _data.hurdle_lower_turns_needed) * 1.0f);
+
+		hurlde_score = max((double)0.0f, hurlde_score);
+		hurlde_score = min((double)1.0f, hurlde_score);
 	}
 	else hurlde_score = 0.0f;
 
-	double archery_distance = state.archery_x * state.archery_x + 
-		state.archery_y * state.archery_y;
+	double archery_distance = sqrt(state.archery_x * state.archery_x + 
+		state.archery_y * state.archery_y);
 
 	double archery_score;
 
-	if (!_data.archery_game_over)
+	if (!_data.archery_game_over
+		&& (_data.archery_upper_distance_needed - _data.archery_lower_distance_needed) != 0)
 	{
-		archery_score = 1.0f - (sqrt(archery_distance * 1.0f)
-				/ sqrt(20.0f * 20.0f + 20.0f * 20.0f));
+		// archery_score = 1.0f - (sqrt(archery_distance * 1.0f)
+		// 		/ sqrt(20.0f * 20.0f + 20.0f * 20.0f));
+
+		archery_score = ((_data.archery_upper_distance_needed - archery_distance) * 1.0f) / 
+			((_data.archery_upper_distance_needed - _data.archery_lower_distance_needed) * 1.0f);
+
+		archery_score = max((double)0.0f, archery_score);
+		archery_score = min((double)1.0f, archery_score);
 	}
 	else archery_score = 0.0f;
 
 	double diving_score;
 
-	if (!_data.diving_game_over && (_data.maxDivingScore - _data.minDivingScore) != 0)
+	if (!_data.diving_game_over && (_data.diving_upper_score - _data.diving_lowest_score) != 0)
 	{
-		diving_score = 1.0f - (((_data.maxDivingScore - state.diving_point) * 1.0f)
-			/ ((_data.maxDivingScore - _data.minDivingScore) * 1.0f));
+		diving_score = 1.0f - (((_data.diving_upper_score - state.diving_point) * 1.0f)
+			/ ((_data.diving_upper_score - _data.diving_lowest_score) * 1.0f));
+
+		diving_score = max((double)0.0f, diving_score);
+		diving_score = min((double)1.0f, diving_score);
 	}
 	else diving_score = 0.0f;
 
@@ -823,6 +976,9 @@ int main()
 		{
 			getline(cin, scores[i]);
 		}
+
+		// calculating final scoring for each mini game
+		scoring.calculateGamesFinalScores(scores[player_idx]);
 
 		#if PRINT_INPUT
 		tunrInput << "---start-turn-input---------" << endl;
